@@ -375,15 +375,21 @@ function showModal() {
   const modal = document.createElement("div");
   modal.className = "modal-overlay";
   modal.id = "processingModal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "modalTitle");
+  modal.setAttribute("aria-hidden", "false");
 
   modal.innerHTML = `
     <div class="modal">
-      <div class="spinner"></div>
+      <div class="spinner" aria-hidden="true"></div>
+      <h2 id="modalTitle" class="visually-hidden">Processing</h2>
       <div>Aggregating addresses...</div>
     </div>
   `;
 
   document.body.appendChild(modal);
+  document.body.style.overflow = "hidden";
 }
 
 /**
@@ -393,7 +399,9 @@ function showModal() {
 function hideModal() {
   const modal = document.getElementById("processingModal");
   if (modal) {
+    modal.setAttribute("aria-hidden", "true");
     modal.remove();
+    document.body.style.overflow = "";
   }
 }
 

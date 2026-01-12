@@ -13,6 +13,7 @@ A static browser application for aggregating and consolidating IPv4 and IPv6 CID
 - **Diff Visualization** - See what changed between input and output
 - **Keyboard Shortcut** - Press Ctrl+Enter to aggregate quickly
 - **Clipboard Export** - Copy aggregated results with one click
+- **Accessible** - WCAG AA compliant with screen reader support, keyboard navigation, and proper color contrast
 - **Offline Ready** - Works entirely in the browser after loading
 
 ## Usage

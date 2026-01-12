@@ -60,7 +60,7 @@ test.describe("Error Handling", () => {
     await expect(errorDiv).toHaveText(/Invalid CIDR/);
   });
 
-  test("should show error for CIDR without prefix", async ({ page }) => {
+  test("should auto-convert bare IPv4 address to /32", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -70,8 +70,51 @@ test.describe("Error Handling", () => {
     await aggregateBtn.click();
 
     const errorDiv = page.locator("#error");
-    await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
+    await expect(errorDiv).not.toBeVisible();
+
+    const textarea = page.locator("#addressInput");
+    await expect(textarea).toHaveValue("192.168.1.0/32");
+
+    const copyBtn = page.locator("#copyBtn");
+    await expect(copyBtn).toBeEnabled();
+  });
+
+  test("should auto-convert bare IPv6 address to /128", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("2001:db8::");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.click();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).not.toBeVisible();
+
+    const textarea = page.locator("#addressInput");
+    await expect(textarea).toHaveValue("2001:db8::/128");
+
+    const copyBtn = page.locator("#copyBtn");
+    await expect(copyBtn).toBeEnabled();
+  });
+
+  test("should handle mixed bare IPv4 and IPv6 addresses", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("10.0.0.1\n2001:db8::1");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.click();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).not.toBeVisible();
+
+    const textarea = page.locator("#addressInput");
+    await expect(textarea).toHaveValue("10.0.0.1/32\n2001:db8::1/128");
+
+    const copyBtn = page.locator("#copyBtn");
+    await expect(copyBtn).toBeEnabled();
   });
 
   test("should show error for invalid prefix format", async ({ page }) => {

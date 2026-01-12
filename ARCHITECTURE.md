@@ -177,10 +177,20 @@ User can copy results
 
 ## Accessibility
 
-- Proper ARIA labels on input elements
-- Keyboard navigation support
-- Semantic HTML structure
-- Focus states on interactive elements
+The application follows WCAG 2.1 AA guidelines for accessibility:
+
+- **Semantic HTML** - Uses `<header>`, `<main>`, and `<footer>` landmarks for screen reader navigation
+- **Skip Link** - Keyboard users can skip to main content
+- **ARIA Attributes** - Proper ARIA labels, roles, and live regions for dynamic content
+  - `aria-label` on input elements
+  - `aria-live="polite"` on error and diff containers for announcements
+  - `role="dialog"` and `aria-modal="true"` on processing modal
+- **Form Accessibility** - Visually-hidden labels for all form controls
+- **Keyboard Navigation** - Full keyboard support with visible focus indicators
+  - `:focus-visible` styles for buttons and links
+  - Tab order follows logical reading order
+- **Color Contrast** - All text meets WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
+- **Screen Reader Support** - All interactive elements have accessible names
 
 ## Security
 
