@@ -1,0 +1,40 @@
+{
+  "name": "ip-address-aggregate",
+  "version": "1.0.0",
+  "description": "Static browser application for aggregating IPv4 and IPv6 CIDR addresses",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "ip",
+    "ipv4",
+    "ipv6",
+    "cidr",
+    "aggregate"
+  ],
+  "author": "Jason Tally",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@vitest/coverage-v8": "^1.1.0",
+    "@vitest/ui": "^1.1.0",
+    "eslint": "^8.56.0",
+    "jsdom": "^23.0.1",
+    "prettier": "^3.1.1",
+    "vitest": "^1.1.0"
+  },
+  "dependencies": {
+    "cidr-tools": "^8.0.0",
+    "diff": "^5.1.0"
+  }
+}
