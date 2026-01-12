@@ -2,6 +2,8 @@
 
 A static browser application for aggregating and consolidating IPv4 and IPv6 CIDR addresses. Merge overlapping and adjacent network ranges for cleaner network documentation.
 
+**Live App:** [https://agg.jasontally.com](https://agg.jasontally.com)
+
 ## Features
 
 - **IPv4 Support** - Aggregate IPv4 CIDR ranges
@@ -123,7 +125,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.
 
 ## Credits
 
-Created by [Jason Tally](https://JasonTally.com). Code is available on [GitHub](https://github.com/jasontally/IP-Aggregate).
+Created by [Jason Tally](https://JasonTally.com). Code is available on [GitHub](https://github.com/jasontally/ip-address-aggregate).
 
 ## License
 
