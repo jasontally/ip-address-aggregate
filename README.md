@@ -50,22 +50,425 @@ A static browser application for aggregating and consolidating IPv4 and IPv6 CID
 ```
 
 **Note:** Bare IP addresses (without prefix) are automatically converted to host routes:
+
 - IPv4: `10.0.0.0` → `10.0.0.0/32`
 - IPv6: `2001:db8::` → `2001:db8::/128`
-192.168.1.0/25
-192.168.1.128/25
-10.0.0.0/9
-10.128.0.0/9
-2001:db8::/64
-2001:db8:0:0:1::/64
+
+## Output Formats
+
+The application supports 15 output formats for generating network configurations across different vendors and platforms. All formats support both IPv4 and IPv6 unless noted otherwise.
+
+### Format List
+
+| Format Name      | IPv6 Support | Description                            |
+| ---------------- | ------------ | -------------------------------------- |
+| `cidr`           | ✅ Yes       | Standard CIDR notation (default)       |
+| `cisco-acl`      | ✅ Yes       | Cisco IOS access control lists         |
+| `cisco-prefix`   | ✅ Yes       | Cisco prefix-list for route-maps       |
+| `cisco-wildcard` | ❌ No        | Cisco wildcard mask format (IPv4 only) |
+| `ip-mask`        | ✅ Yes       | IP address with netmask                |
+| `fortigate`      | ✅ Yes       | FortiGate firewall address groups      |
+| `cisco-ipv6-acl` | ✅ Yes       | Cisco IPv6-specific access lists       |
+| `juniper-ipv6`   | ✅ Yes       | Juniper SRX IPv6 firewall filters      |
+| `iptables`       | ✅ Yes       | Linux iptables/ip6tables rules         |
+| `ufw`            | ✅ Yes       | Uncomplicated Firewall rules           |
+| `palo-alto`      | ✅ Yes       | Palo Alto Networks EDL format          |
+| `aws-sg`         | ✅ Yes       | AWS Security Group JSON rules          |
+| `gcp-firewall`   | ✅ Yes       | Google Cloud Platform firewall JSON    |
+| `azure-nsg`      | ✅ Yes       | Azure Network Security Group JSON      |
+| `reverse-dns`    | ✅ Yes       | Reverse DNS PTR records                |
+
+### Format Examples
+
+#### CIDR Format (Default)
+
+Standard CIDR notation for both IPv4 and IPv6.
+
+**Input:**
+
 ```
 
-### Example Output
+192.168.1.0/24
+10.0.0.0/8
+2001:db8::/32
 
 ```
+
+**Output:**
+
+```
+
 10.0.0.0/8
 192.168.1.0/24
-2001:db8::/63
+2001:db8::/32
+
+```
+
+#### Cisco ACL Format
+
+Cisco IOS access control lists with wildcard masks for IPv4 and CIDR notation for IPv6.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+access-list 101 permit ip 10.0.0.0 0.255.255.255 any
+access-list 101 permit ip 192.168.0.0 0.0.0.255 any
+ipv6 access-list FIREWALL permit 2001:db8::/32
+
+```
+
+#### Cisco Prefix List Format
+
+Cisco prefix-list for route-map filtering with sequence numbers.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+ip prefix-list LIST seq 10 permit 10.0.0.0/8 le 8
+ip prefix-list LIST seq 20 permit 192.168.0.0/24 le 24
+ipv6 prefix-list LIST6 seq 10 permit 2001:db8::/32 le 32
+
+```
+
+#### Cisco Wildcard Format
+
+Cisco wildcard mask format (IPv4 only). IPv6 addresses are skipped with a warning.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+10.0.0.0 0.255.255.255
+192.168.0.0 0.0.0.255
+
+```
+
+#### IP Mask Format
+
+IP address with netmask for IPv4, CIDR notation for IPv6.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+10.0.0.0 255.0.0.0
+192.168.0.0 255.255.255.0
+2001:db8::/32
+
+```
+
+#### FortiGate Format
+
+FortiGate firewall configuration CLI syntax.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+config firewall addrgrp
+edit "GROUP_NAME"
+set member "10.0.0.0/8"
+set member "192.168.0.0/24"
+set member "2001:db8::/32"
+next
+end
+
+```
+
+#### Cisco IPv6 ACL Format
+
+Dedicated IPv6 access list format (IPv6 addresses only).
+
+**Input:**
+
+```
+
+192.168.0.0/24
+2001:db8::/32
+2001:db8:0:1::/48
+
+```
+
+**Output:**
+
+```
+
+ipv6 access-list FIREWALL permit 2001:db8::/32
+ipv6 access-list FIREWALL permit 2001:db8:0:1::/48
+
+```
+
+#### Juniper IPv6 Format
+
+Juniper SRX firewall address-book and address-set configuration (IPv6 addresses only).
+
+**Input:**
+
+```
+
+192.168.0.0/24
+2001:db8::/32
+2001:db8:0:1::/48
+
+```
+
+**Output:**
+
+```
+
+set security address-book global
+set address ADDR-0 2001:db8:: 32
+set address ADDR-1 2001:db8:0:1:: 48
+set address address-set FIREWALL_LIST
+set address FIREWALL_LIST ADDR-0
+set address FIREWALL_LIST ADDR-1
+
+```
+
+#### Iptables Format
+
+Linux firewall rules - iptables for IPv4, ip6tables for IPv6.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT
+iptables -A INPUT -s 192.168.0.0/24 -j ACCEPT
+ip6tables -A INPUT -s 2001:db8::/32 -j ACCEPT
+
+```
+
+#### UFW Format
+
+Uncomplicated Firewall rules.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/48
+
+```
+
+**Output:**
+
+```
+
+ufw allow from 10.0.0.0/8
+ufw allow from 192.168.0.0/24
+ufw allow from 2001:db8::/48
+
+```
+
+#### Palo Alto Format
+
+Palo Alto Networks External Dynamic List format (one CIDR per line).
+
+**Input:**
+
+```
+
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+
+```
+
+**Output:**
+
+```
+
+10.0.0.0/8
+192.168.0.0/24
+2001:db8::/32
+
+```
+
+#### AWS Security Group Format
+
+AWS Security Group rules in JSON format with CidrIp for IPv4 and CidrIpv6 for IPv6.
+
+**Input:**
+
+```
+
+192.168.0.0/24
+2001:db8::/32
+
+```
+
+**Output:**
+
+```json
+{
+  "Rules": [
+    {
+      "IpProtocol": "-1",
+      "FromPort": -1,
+      "ToPort": -1,
+      "CidrIp": "192.168.0.0/24",
+      "Description": "Allow from 192.168.0.0/24"
+    },
+    {
+      "IpProtocol": "-1",
+      "FromPort": -1,
+      "ToPort": -1,
+      "CidrIpv6": "2001:db8::/32",
+      "Description": "Allow from 2001:db8::/32"
+    }
+  ]
+}
+```
+
+#### GCP Firewall Format
+
+Google Cloud Platform firewall rules in JSON format.
+
+**Input:**
+
+```
+192.168.0.0/24
+2001:db8::/32
+```
+
+**Output:**
+
+```json
+{
+  "Rules": [
+    {
+      "name": "rule-192-168-0-0",
+      "sourceRanges": ["192.168.0.0/24"],
+      "allowed": [{ "IPProtocol": "TCP", "ports": ["80", "443"] }]
+    },
+    {
+      "name": "rule-2001-db8-0",
+      "sourceRanges": ["2001:db8::/32"],
+      "allowed": [{ "IPProtocol": "TCP", "ports": ["80", "443"] }]
+    }
+  ]
+}
+```
+
+#### Azure NSG Format
+
+Azure Network Security Group rules in JSON format.
+
+**Input:**
+
+```
+192.168.0.0/24
+2001:db8::/32
+```
+
+**Output:**
+
+```json
+{
+  "rules": [
+    {
+      "name": "rule-192-168-0-0",
+      "properties": {
+        "sourceAddressPrefix": "192.168.0.0/24",
+        "access": "Allow",
+        "priority": 1000
+      }
+    },
+    {
+      "name": "rule-2001-db8-0",
+      "properties": {
+        "sourceAddressPrefix": "2001:db8::/32",
+        "access": "Allow",
+        "priority": 1000
+      }
+    }
+  ]
+}
+```
+
+#### Reverse DNS Format
+
+Reverse DNS zone records - reversed octets for IPv4, nibble reversal for IPv6.
+
+**Input:**
+
+```
+192.168.0.0/24
+10.0.0.0/8
+2001:db8::/32
+```
+
+**Output:**
+
+```
+0.0.10.in-addr.arpa
+0.168.192.in-addr.arpa
+0.8.b.d.0.0.8.db8.ip6.arpa
 ```
 
 ## Development

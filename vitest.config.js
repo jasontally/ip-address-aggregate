@@ -5,8 +5,18 @@
  */
 
 import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "https://esm.sh/cidr-tools@8.0.0": path.resolve(
+        __dirname,
+        "node_modules/cidr-tools",
+      ),
+      "https://esm.sh/diff@5.1.0": path.resolve(__dirname, "node_modules/diff"),
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",

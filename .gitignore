@@ -1,6 +1,12 @@
-node_modules/
-coverage/
-test-results/
-playwright-report/
-.DS_Store
-*.log
+ node_modules/
+ coverage/
+ test-results/
+ playwright-report/
+ .DS_Store
+ *.log
+ .env*
+ .vscode/
+ *.swp
+ *.swo
+ .idea/
+ Thumbs.db
