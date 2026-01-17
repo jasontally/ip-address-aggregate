@@ -46,9 +46,7 @@ describe("Format Transformers", () => {
         new CIDRBlock("fe80::", 10, IPVersion.IPv6),
       ];
       const result = transformer.format(blocks);
-      expect(result).toBe(
-        "2001:0db8:0000:0000:0000:0000:0000:0000/32\nfe80:0000:0000:0000:0000:0000:0000:0000/10",
-      );
+      expect(result).toBe("2001:db8::/32\nfe80::/10");
     });
 
     it("should handle mixed IPv4/IPv6", () => {
@@ -58,9 +56,7 @@ describe("Format Transformers", () => {
         new CIDRBlock("2001:db8::", 32, IPVersion.IPv6),
       ];
       const result = transformer.format(blocks);
-      expect(result).toBe(
-        "192.168.1.0/24\n2001:0db8:0000:0000:0000:0000:0000:0000/32",
-      );
+      expect(result).toBe("192.168.1.0/24\n2001:db8::/32");
     });
 
     it("should return correct name", () => {
@@ -95,7 +91,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "ipv6 access-list FIREWALL permit 2001:0db8:0000:0000:0000:0000:0000:0000/32\nipv6 access-list FIREWALL permit fe80:0000:0000:0000:0000:0000:0000:0000/10",
+        "ipv6 access-list FIREWALL permit 2001:db8::/32\nipv6 access-list FIREWALL permit fe80::/10",
       );
     });
 
@@ -107,7 +103,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "access-list 101 permit ip 192.168.1.0 0.0.0.255 any\nipv6 access-list FIREWALL permit 2001:0db8:0000:0000:0000:0000:0000:0000/32",
+        "access-list 101 permit ip 192.168.1.0 0.0.0.255 any\nipv6 access-list FIREWALL permit 2001:db8::/32",
       );
     });
 
@@ -143,7 +139,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "ipv6 prefix-list LIST6 seq 10 permit 2001:0db8:0000:0000:0000:0000:0000:0000/32 le 32\nipv6 prefix-list LIST6 seq 20 permit fe80:0000:0000:0000:0000:0000:0000:0000/10 le 10",
+        "ipv6 prefix-list LIST6 seq 10 permit 2001:db8::/32 le 32\nipv6 prefix-list LIST6 seq 20 permit fe80::/10 le 10",
       );
     });
 
@@ -155,7 +151,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "ip prefix-list LIST seq 10 permit 192.168.1.0/24 le 24\nipv6 prefix-list LIST6 seq 10 permit 2001:0db8:0000:0000:0000:0000:0000:0000/32 le 32",
+        "ip prefix-list LIST seq 10 permit 192.168.1.0/24 le 24\nipv6 prefix-list LIST6 seq 10 permit 2001:db8::/32 le 32",
       );
     });
 
@@ -219,7 +215,7 @@ describe("Format Transformers", () => {
       const transformer = new IPMaskTransformer();
       const blocks = [new CIDRBlock("2001:db8::", 32, IPVersion.IPv6)];
       const result = transformer.format(blocks);
-      expect(result).toBe("2001:0db8:0000:0000:0000:0000:0000:0000/32");
+      expect(result).toBe("2001:db8::/32");
     });
 
     it("should handle mixed input", () => {
@@ -229,9 +225,7 @@ describe("Format Transformers", () => {
         new CIDRBlock("2001:db8::", 32, IPVersion.IPv6),
       ];
       const result = transformer.format(blocks);
-      expect(result).toBe(
-        "192.168.1.0 255.255.255.0\n2001:0db8:0000:0000:0000:0000:0000:0000/32",
-      );
+      expect(result).toBe("192.168.1.0 255.255.255.0\n2001:db8::/32");
     });
 
     it("should return correct name", () => {
@@ -263,7 +257,7 @@ describe("Format Transformers", () => {
       const blocks = [new CIDRBlock("2001:db8::", 32, IPVersion.IPv6)];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        'config firewall addrgrp\n  edit "address_group"\n    set member "2001:0db8:0000:0000:0000:0000:0000:0000/32"\n  next\nend',
+        'config firewall addrgrp\n  edit "address_group"\n    set member "2001:db8::/32"\n  next\nend',
       );
     });
 
@@ -275,7 +269,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        'config firewall addrgrp\n  edit "address_group"\n    set member "192.168.1.0/24"\n    set member "2001:0db8:0000:0000:0000:0000:0000:0000/32"\n  next\nend',
+        'config firewall addrgrp\n  edit "address_group"\n    set member "192.168.1.0/24"\n    set member "2001:db8::/32"\n  next\nend',
       );
     });
 
@@ -299,7 +293,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "ipv6 access-list FIREWALL permit 2001:0db8:0000:0000:0000:0000:0000:0000/32\nipv6 access-list FIREWALL permit fe80:0000:0000:0000:0000:0000:0000:0000/10",
+        "ipv6 access-list FIREWALL permit 2001:db8::/32\nipv6 access-list FIREWALL permit fe80::/10",
       );
     });
 
@@ -323,7 +317,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "set security address-book global\nset address ADDR-0 2001:0db8:0000:0000:0000:0000:0000:0000 32\nset address ADDR-1 fe80:0000:0000:0000:0000:0000:0000:0000 10\nset address address-set FIREWALL_LIST\nset address FIREWALL_LIST ADDR-0\nset address FIREWALL_LIST ADDR-1",
+        "set security address-book global\nset address ADDR-0 2001:db8:: 32\nset address ADDR-1 fe80:: 10\nset address address-set FIREWALL_LIST\nset address FIREWALL_LIST ADDR-0\nset address FIREWALL_LIST ADDR-1",
       );
     });
 
@@ -355,9 +349,7 @@ describe("Format Transformers", () => {
       const transformer = new IptablesTransformer();
       const blocks = [new CIDRBlock("2001:db8::", 32, IPVersion.IPv6)];
       const result = transformer.format(blocks);
-      expect(result).toBe(
-        "ip6tables -A INPUT -s 2001:0db8:0000:0000:0000:0000:0000:0000/32 -j ACCEPT",
-      );
+      expect(result).toBe("ip6tables -A INPUT -s 2001:db8::/32 -j ACCEPT");
     });
 
     it("should generate mixed rules", () => {
@@ -368,7 +360,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "iptables -A INPUT -s 192.168.1.0/24 -j ACCEPT\nip6tables -A INPUT -s 2001:0db8:0000:0000:0000:0000:0000:0000/32 -j ACCEPT",
+        "iptables -A INPUT -s 192.168.1.0/24 -j ACCEPT\nip6tables -A INPUT -s 2001:db8::/32 -j ACCEPT",
       );
     });
 
@@ -392,7 +384,7 @@ describe("Format Transformers", () => {
       ];
       const result = transformer.format(blocks);
       expect(result).toBe(
-        "ufw allow from 192.168.1.0/24\nufw allow from 2001:0db8:0000:0000:0000:0000:0000:0000/32",
+        "ufw allow from 192.168.1.0/24\nufw allow from 2001:db8::/32",
       );
     });
 
@@ -416,9 +408,7 @@ describe("Format Transformers", () => {
         new CIDRBlock("2001:db8::", 32, IPVersion.IPv6),
       ];
       const result = transformer.format(blocks);
-      expect(result).toBe(
-        "192.168.1.0/24\n10.0.0.0/8\n2001:0db8:0000:0000:0000:0000:0000:0000/32",
-      );
+      expect(result).toBe("192.168.1.0/24\n10.0.0.0/8\n2001:db8::/32");
     });
 
     it("should return correct name", () => {
@@ -451,10 +441,7 @@ describe("Format Transformers", () => {
       const parsed = JSON.parse(result);
       expect(parsed).toHaveProperty("Rules");
       expect(parsed.Rules).toHaveLength(1);
-      expect(parsed.Rules[0]).toHaveProperty(
-        "CidrIpv6",
-        "2001:0db8:0000:0000:0000:0000:0000:0000/32",
-      );
+      expect(parsed.Rules[0]).toHaveProperty("CidrIpv6", "2001:db8::/32");
       expect(parsed.Rules[0]).not.toHaveProperty("CidrIp");
     });
 
@@ -469,10 +456,7 @@ describe("Format Transformers", () => {
       expect(parsed).toHaveProperty("Rules");
       expect(parsed.Rules).toHaveLength(2);
       expect(parsed.Rules[0]).toHaveProperty("CidrIp", "192.168.1.0/24");
-      expect(parsed.Rules[1]).toHaveProperty(
-        "CidrIpv6",
-        "2001:0db8:0000:0000:0000:0000:0000:0000/32",
-      );
+      expect(parsed.Rules[1]).toHaveProperty("CidrIpv6", "2001:db8::/32");
     });
 
     it("should return correct name", () => {

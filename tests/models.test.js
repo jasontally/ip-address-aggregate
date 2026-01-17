@@ -85,9 +85,7 @@ describe("Core Methods", () => {
     expect(ipv4Block.toCIDRString()).toBe("192.168.1.0/24");
 
     const ipv6Block = new CIDRBlock("2001:db8::", 32, IPVersion.IPv6);
-    expect(ipv6Block.toCIDRString()).toBe(
-      "2001:0db8:0000:0000:0000:0000:0000:0000/32",
-    );
+    expect(ipv6Block.toCIDRString()).toBe("2001:db8::/32");
   });
 
   it("should calculate start address", () => {

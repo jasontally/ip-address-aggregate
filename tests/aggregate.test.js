@@ -271,9 +271,7 @@ describe("CIDRBlock Models", () => {
 
   it("should convert IPv6 CIDRBlock to CIDR string", () => {
     const model = CIDRBlock.fromCIDRString("2001:db8::/32");
-    expect(model.toCIDRString()).toBe(
-      "2001:0db8:0000:0000:0000:0000:0000:0000/32",
-    );
+    expect(model.toCIDRString()).toBe("2001:db8::/32");
   });
 
   it("should get range from CIDRBlock", () => {
@@ -303,9 +301,7 @@ describe("CIDR Model Sorting", () => {
     const sorted = sortCIDRModels(models);
     expect(sorted[0].toCIDRString()).toBe("10.0.0.0/8");
     expect(sorted[1].toCIDRString()).toBe("192.168.1.0/24");
-    expect(sorted[2].toCIDRString()).toBe(
-      "2001:0db8:0000:0000:0000:0000:0000:0000/32",
-    );
+    expect(sorted[2].toCIDRString()).toBe("2001:db8::/32");
   });
 
   it("should sort IPv4 models by address then prefix", () => {
@@ -327,15 +323,9 @@ describe("CIDR Model Sorting", () => {
       CIDRBlock.fromCIDRString("2001:db8:1::/48"),
     ];
     const sorted = sortCIDRModels(models);
-    expect(sorted[0].toCIDRString()).toBe(
-      "2001:0db8:0000:0000:0000:0000:0000:0000/32",
-    );
-    expect(sorted[1].toCIDRString()).toContain(
-      "2001:0db8:0001:0000:0000:0000:0000:0000/48",
-    );
-    expect(sorted[2].toCIDRString()).toContain(
-      "2001:0db8:0002:0000:0000:0000:0000:0000/48",
-    );
+    expect(sorted[0].toCIDRString()).toBe("2001:db8::/32");
+    expect(sorted[1].toCIDRString()).toContain("2001:db8:1::/48");
+    expect(sorted[2].toCIDRString()).toContain("2001:db8:2::/48");
   });
 
   it("should not mutate original array", () => {
@@ -358,7 +348,7 @@ describe("Format Transformation", () => {
     ];
     const result = transformToFormat(models, "cidr");
     expect(result).toContain("192.168.1.0/24");
-    expect(result).toContain("2001:0db8:0000:0000:0000:0000:0000:0000/32");
+    expect(result).toContain("2001:db8::/32");
     expect(result).toContain("\n");
   });
 
@@ -373,9 +363,7 @@ describe("Format Transformation", () => {
   it("should transform IPv6 to Cisco ACL format", () => {
     const models = [CIDRBlock.fromCIDRString("2001:db8::/32")];
     const result = transformToFormat(models, "cisco-acl");
-    expect(result).toContain(
-      "ipv6 access-list FIREWALL permit 2001:0db8:0000:0000:0000:0000:0000:0000/32",
-    );
+    expect(result).toContain("ipv6 access-list FIREWALL permit 2001:db8::/32");
   });
 
   it("should transform to Cisco prefix-list format", () => {
@@ -434,7 +422,7 @@ describe("Backward Compatibility", () => {
     const result = transformToFormat(models, "cidr");
     const lines = result.split("\n").filter((line) => line.length > 0);
     expect(lines[0]).toBe("192.168.1.0/24");
-    expect(lines[1]).toBe("2001:0db8:0000:0000:0000:0000:0000:0000/32");
+    expect(lines[1]).toBe("2001:db8::/32");
   });
 
   it("IPv4 aggregation should work with model-based flow", () => {

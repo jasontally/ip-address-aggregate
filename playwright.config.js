@@ -21,7 +21,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], permissions: ["clipboard-read"] },
     },
     {
       name: "firefox",
@@ -29,7 +29,7 @@ export default defineConfig({
     },
     {
       name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      use: { ...devices["Desktop Safari"], permissions: ["clipboard-read"] },
     },
   ],
 
