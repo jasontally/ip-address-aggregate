@@ -15,11 +15,11 @@
     <!-- Primary SEO Meta Tags -->
     <meta
       name="description"
-      content="Transform and format IPv4 and IPv6 CIDR addresses. Aggregate, convert to wildcard masks, create access lists, and more for cleaner network documentation."
+      content="Aggregate and format IPv4 and IPv6 CIDR addresses. Convert to wildcard masks, create access lists, and more for cleaner network documentation."
     />
     <meta
       name="keywords"
-      content="IP address tools, CIDR transformation, IPv4 formatting, IPv6 formatting, wildcard masks, access lists, subnet tools, network planning"
+      content="IP address tools, CIDR aggregation, IPv4 formatting, IPv6 formatting, wildcard masks, access lists, subnet tools, network planning"
     />
     <meta name="author" content="Jason Tally" />
 
@@ -28,11 +28,11 @@
     <meta property="og:url" content="https://agg.jasontally.com/" />
     <meta
       property="og:title"
-      content="IP Address Tools | CIDR Transformation"
+      content="Visual IP Address Aggregation Tool"
     />
     <meta
       property="og:description"
-      content="Transform IPv4 and IPv6 CIDR ranges for cleaner network documentation. Aggregate, format, and convert addresses."
+      content="Aggregate IPv4 and IPv6 CIDR ranges for cleaner network documentation. Format and convert addresses."
     />
     <meta property="og:image" content="" />
 
@@ -41,11 +41,11 @@
     <meta property="twitter:url" content="https://agg.jasontally.com/" />
     <meta
       property="twitter:title"
-      content="IP Address Tools | CIDR Transformation"
+      content="Visual IP Address Aggregation Tool"
     />
     <meta
       property="twitter:description"
-      content="Transform IPv4 and IPv6 CIDR ranges for cleaner network documentation. Aggregate, format, and convert addresses."
+      content="Aggregate IPv4 and IPv6 CIDR ranges for cleaner network documentation. Format and convert addresses."
     />
 
     <!-- Canonical URL -->
@@ -56,8 +56,8 @@
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "IP Address Tools",
-        "description": "Tool for transforming IPv4 and IPv6 CIDR address ranges. Aggregate, format, and convert addresses for various purposes.",
+        "name": "Visual IP Address Aggregation Tool",
+        "description": "Tool for aggregating IPv4 and IPv6 CIDR address ranges. Format and convert addresses for various purposes.",
         "applicationCategory": "NetworkManagementApplication",
         "operatingSystem": "Web Browser",
         "browserRequirements": "HTML5, CSS3, JavaScript ES6+",
@@ -67,18 +67,18 @@
           "priceCurrency": "USD"
         },
         "featureList": [
-          "IPv4 CIDR transformations",
-          "IPv6 CIDR transformations",
+          "IPv4 CIDR aggregation",
+          "IPv6 CIDR aggregation",
           "Mixed IPv4/IPv6 processing",
           "Diff visualization",
           "Keyboard shortcuts",
           "Clipboard export"
         ],
-        "keywords": "IP address tools, CIDR transformation, IPv4 formatting, IPv6 formatting, wildcard masks, access lists, subnet tools"
+        "keywords": "IP address tools, CIDR aggregation, IPv4 formatting, IPv6 formatting, wildcard masks, access lists, subnet tools"
       }
     </script>
 
-    <title>IP Address Tools | CIDR Transformation</title>
+    <title>Visual IP Address Aggregation Tool</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <style>
       * {
@@ -478,7 +478,7 @@
   <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <header>
-      <h1>IP Address Tools</h1>
+      <h1>Visual IP Address Aggregation Tool</h1>
     </header>
 
     <main id="main-content">
@@ -487,7 +487,7 @@
           <select id="operationSelect" class="operation-select">
             <option value="aggregate">Aggregate</option>
           </select>
-          <button id="aggregateBtn" onclick="aggregateAddresses()">Transform</button>
+          <button id="aggregateBtn" onclick="aggregateAddresses()">Go</button>
         </div>
 
         <div class="input-output-container">
@@ -521,8 +521,8 @@
             <textarea
               id="addressOutput"
               readonly
-              placeholder="Transformed results will appear here"
-              aria-label="Transformed output"
+              placeholder="Results will appear here"
+              aria-label="Output"
             ></textarea>
           </div>
         </div>
@@ -568,7 +568,7 @@
           or comma-separated).
         </p>
         <p>
-          Click the Aggregate button (or press Ctrl+Enter) to merge overlapping
+          Click the Go button (or press Ctrl+Enter) to merge overlapping
           and adjacent ranges.
         </p>
         <p>
@@ -613,7 +613,7 @@
         class="footer-section"
         style="text-align: center; color: #666; font-size: 12px"
       >
-        Version 1.0.3
+        Version 1.0.4
       </div>
     </footer>
 

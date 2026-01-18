@@ -9,7 +9,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Basic Aggregation Flow", () => {
   test("should load the page successfully", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText("IP Address Aggregate");
+    await expect(page.locator("h1")).toHaveText("Visual IP Address Aggregation Tool");
   });
 
   test("should aggregate IPv4 addresses", async ({ page }) => {
@@ -95,16 +95,21 @@ test.describe("Basic Aggregation Flow", () => {
     expect(elapsedTime).toBeGreaterThanOrEqual(1500);
   });
 
-  test("should enable copy button after aggregation", async ({ page }) => {
+  test("should preserve input and show output after aggregation", async ({ page }) => {
     await page.goto("/");
 
-    const copyBtn = page.locator("#copyBtn");
-    await expect(copyBtn).toBeDisabled();
-
     const input = page.locator("#addressInput");
-    await input.fill("192.168.1.0/24\n10.0.0.0/8");
+    const originalInput = "192.168.1.0/25\n192.168.1.128/25\n10.0.0.0/8";
+    await input.fill(originalInput);
+
     await page.click("#aggregateBtn");
 
-    await expect(copyBtn).toBeEnabled();
+    await page.waitForTimeout(100);
+
+    const currentInput = await input.inputValue();
+    expect(currentInput).toBe(originalInput);
+
+    const output = page.locator("#addressOutput");
+    await expect(output).toHaveValue(/192.168.1.0\/24/);
   });
 });
