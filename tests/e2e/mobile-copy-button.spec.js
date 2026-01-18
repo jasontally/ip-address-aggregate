@@ -1,0 +1,356 @@
+/**
+ * Mobile Copy Button E2E tests
+ * Copyright (c) 2025 Jason Tally and contributors
+ * SPDX-License-Identifier: MIT
+ */
+
+import { test, expect } from "@playwright/test";
+
+test.describe("Mobile Copy Button Functionality", () => {
+  test.beforeEach(async ({ page }) => {
+    const viewport = page.viewportSize();
+    expect(viewport.width).toBeLessThanOrEqual(768);
+  });
+
+  test("should copy input to clipboard on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24\n10.0.0.0/8");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).toBe("192.168.1.0/24\n10.0.0.0/8");
+  });
+
+  test("should show checkmark feedback after tapping copy button", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toHaveText("✓");
+
+    const svgIcon = copyBtn.locator("svg");
+    await expect(svgIcon).toBeVisible({ timeout: 3000 });
+  });
+
+  test("should copy output to clipboard after aggregation on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/25\n192.168.1.128/25");
+    await page.tap("#aggregateBtn");
+
+    const output = page.locator("#addressOutput");
+    const expectedText = await output.inputValue();
+
+    const copyBtn = page.locator(".copy-output-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).toBe(expectedText);
+  });
+
+  test("should handle multiple rapid taps on input copy button", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+
+    for (let i = 0; i < 3; i++) {
+      await copyBtn.tap();
+      await expect(copyBtn).toHaveText("✓");
+
+      const svgIcon = copyBtn.locator("svg");
+      await expect(svgIcon).toBeVisible({ timeout: 3000 });
+    }
+  });
+
+  test("should handle multiple rapid taps on output copy button", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+    await page.tap("#aggregateBtn");
+
+    const copyBtn = page.locator(".copy-output-btn");
+
+    for (let i = 0; i < 3; i++) {
+      await copyBtn.tap();
+      await expect(copyBtn).toHaveText("✓");
+
+      const svgIcon = copyBtn.locator("svg");
+      await expect(copyBtn).toBeVisible({ timeout: 3000 });
+    }
+  });
+
+  test("should copy from before column on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24\n192.168.2.0/24");
+    await page.tap("#aggregateBtn");
+
+    const beforeColumn = page.locator("#beforeColumn");
+    const expectedText = await beforeColumn.textContent();
+
+    const copyBtn = page.locator(".copy-before-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).toBe(expectedText);
+  });
+
+  test("should copy from after column on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/25\n192.168.1.128/25");
+    await page.tap("#aggregateBtn");
+
+    const afterColumn = page.locator("#afterColumn");
+    const expectedText = await afterColumn.textContent();
+
+    const copyBtn = page.locator(".copy-after-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).toBe(expectedText);
+  });
+
+  test("should copy aggregated results (not original input) on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/25\n192.168.1.128/25");
+
+    await page.tap("#aggregateBtn");
+
+    const outputCopyBtn = page.locator(".copy-output-btn");
+    await outputCopyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).not.toContain("192.168.1.0/25");
+    expect(clipboardText).not.toContain("192.168.1.128/25");
+  });
+
+  test("should preserve original input after aggregation on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    const originalInput = "192.168.1.0/25\n192.168.1.128/25\n10.0.0.0/8";
+    await input.fill(originalInput);
+
+    await page.tap("#aggregateBtn");
+
+    await page.waitForTimeout(100);
+
+    const currentInput = await input.inputValue();
+    expect(currentInput).toBe(originalInput);
+  });
+
+  test("should handle empty input copy on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toHaveText("✓");
+
+    const svgIcon = copyBtn.locator("svg");
+    await expect(svgIcon).toBeVisible({ timeout: 3000 });
+  });
+
+  test("should show visual feedback on all copy buttons on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24\n192.168.2.0/24");
+    await page.tap("#aggregateBtn");
+
+    const copyButtons = page.locator(".icon-button");
+    const count = await copyButtons.count();
+
+    for (let i = 0; i < count; i++) {
+      const btn = copyButtons.nth(i);
+      await btn.tap();
+      await expect(btn).toHaveText("✓");
+
+      const svgIcon = btn.locator("svg");
+      await expect(svgIcon).toBeVisible({ timeout: 3000 });
+    }
+  });
+
+  test("should maintain copy button accessibility on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const copyBtn = page.locator(".copy-input-btn");
+
+    await expect(copyBtn).toHaveAttribute("title", "Copy input");
+    await expect(copyBtn).toHaveAttribute("aria-label", "Copy input");
+  });
+
+  test("should handle copy button tap in portrait mode", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toHaveText("✓");
+  });
+
+  test("should handle copy button tap in landscape mode", async ({ page }) => {
+    await page.setViewportSize({ width: 667, height: 375 });
+
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toHaveText("✓");
+  });
+
+  test("should copy long IPv6 addresses on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill(
+      "2001:0db8:0000:0000:0000:ff00:0042:8329/64\n2001:0db8:0000:0000:0000:ff00:0042:8330/64",
+    );
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).toContain("2001:0db8:0000:0000:0000:ff00:0042:8329/64");
+  });
+
+  test("should copy mixed IPv4 and IPv6 addresses on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill(
+      "192.168.1.0/24\n2001:db8::/32\n10.0.0.0/8\n2001:db8:1::/48",
+    );
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText).toContain("192.168.1.0/24");
+    expect(clipboardText).toContain("2001:db8::/32");
+  });
+
+  test("should handle copy button focus on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toBeFocused();
+  });
+
+  test("should copy from textarea with many addresses on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    const addresses = Array.from({ length: 50 }, (_, i) => `10.${i}.0.0/24`).join(
+      "\n",
+    );
+    await input.fill(addresses);
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    const clipboardText = await page.evaluate(async () => {
+      return await navigator.clipboard.readText();
+    });
+
+    expect(clipboardText.split("\n").length).toBe(50);
+  });
+
+  test("should handle copy button on small mobile screen", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toHaveText("✓");
+  });
+
+  test("should show checkmark briefly then reset on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24");
+
+    const copyBtn = page.locator(".copy-input-btn");
+    await copyBtn.tap();
+
+    await expect(copyBtn).toHaveText("✓");
+
+    await page.waitForTimeout(3000);
+
+    const svgIcon = copyBtn.locator("svg");
+    await expect(svgIcon).toBeVisible();
+  });
+});
