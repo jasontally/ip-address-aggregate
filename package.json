@@ -1,6 +1,6 @@
 {
   "name": "ip-address-aggregate",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Static browser application for aggregating IPv4 and IPv6 CIDR addresses",
   "main": "app.js",
   "type": "module",
@@ -35,7 +35,7 @@
     "vitest": "^1.1.0"
   },
   "dependencies": {
-    "cidr-tools": "^8.0.0",
+    "fast-cidr-tools": "^0.3.4",
     "diff": "^5.1.0",
     "lucide": "^0.562.0"
   }
