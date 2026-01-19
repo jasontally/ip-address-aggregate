@@ -1,6 +1,6 @@
 {
   "name": "ip-address-aggregate",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Static browser application for aggregating IPv4 and IPv6 CIDR addresses",
   "main": "app.js",
   "type": "module",
