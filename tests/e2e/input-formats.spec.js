@@ -31,9 +31,7 @@ test.describe("Input Format Tests", () => {
     await expect(diffContainer).toBeVisible();
   });
 
-  test("should handle mixed newline and comma separators", async ({
-    page,
-  }) => {
+  test("should handle mixed newline and comma separators", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -134,5 +132,79 @@ test.describe("Input Format Tests", () => {
     const ipv6Index = beforeText.indexOf("2001:db8::/32");
 
     expect(ipv4Index).toBeLessThan(ipv6Index);
+  });
+});
+
+test.describe("Extended Input Format Tests", () => {
+  test("should handle IPv4 with subnet mask", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0 255.255.255.0");
+
+    await page.click("#aggregateBtn");
+
+    // Should show corrected warning
+    const warnings = page.locator("#correctedWarnings");
+    await expect(warnings).toBeVisible();
+    await expect(warnings).toContainText("CIDR");
+  });
+
+  test("should handle IPv4 range", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.1-4");
+
+    await page.click("#aggregateBtn");
+
+    // Should show expanded warning
+    const warnings = page.locator("#correctedWarnings");
+    await expect(warnings).toBeVisible();
+    await expect(warnings).toContainText("CIDR");
+  });
+
+  test("should show errors for invalid entries", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24\ninvalid.entry\n10.0.0.1");
+
+    await page.click("#aggregateBtn");
+
+    // Should show error panel
+    const errors = page.locator("#invalidErrors");
+    await expect(errors).toBeVisible();
+    await expect(errors).toContainText("invalid.entry");
+
+    // Should still process valid entries
+    const diffContainer = page.locator("#diffContainer");
+    await expect(diffContainer).toBeVisible();
+  });
+
+  test("should strip IPv6 zone ID", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("fe80::1%eth0/64");
+
+    await page.click("#aggregateBtn");
+
+    // Should show corrected warning
+    const warnings = page.locator("#correctedWarnings");
+    await expect(warnings).toBeVisible();
+    await expect(warnings).toContainText("zone");
+  });
+
+  test("should normalize IPv4 leading zeros", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.001.001/24");
+
+    await page.click("#aggregateBtn");
+
+    const warnings = page.locator("#correctedWarnings");
+    await expect(warnings).toBeVisible();
   });
 });

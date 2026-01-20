@@ -8,30 +8,24 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Safari - iOS Specific Behaviors", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(768);
   });
-  test.skip(({ browserName }) => browserName !== "webkit");
+  test.skip(({ browserName }) => browserName !== 'webkit');
 
   test("should handle iOS viewport scaling correctly", async ({ page }) => {
     await page.goto("/");
 
-    const metaViewport = await page
-      .locator('meta[name="viewport"]')
-      .getAttribute("content");
+    const metaViewport = await page.locator('meta[name="viewport"]').getAttribute(
+      "content",
+    );
 
     expect(metaViewport).toContain("width=device-width");
     expect(metaViewport).toContain("initial-scale=1.0");
     expect(metaViewport).toContain("minimum-scale=0.5");
   });
 
-  test("should prevent iOS elastic scrolling on main content", async ({
-    page,
-  }) => {
+  test("should prevent iOS elastic scrolling on main content", async ({ page }) => {
     await page.goto("/");
 
     const body = page.locator("body");
@@ -40,7 +34,7 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
       el.style.overflow = "auto";
     });
 
-    await page.evaluate(() => window.scrollTo(0, 0));
+    await body.scroll({ top: 0, left: 0 });
 
     const scrollPosition = await body.evaluate(
       (el) => el.scrollTop || window.pageYOffset,
@@ -117,11 +111,11 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
     const input = page.locator("#addressInput");
     await input.tap();
 
-    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
 
     await page.keyboard.press("Escape");
 
-    await expect(input).toBeVisible();
+    await expect(input).not.toBeFocused();
   });
 
   test("should handle iOS focus management", async ({ page }) => {
@@ -130,12 +124,12 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
     const input = page.locator("#addressInput");
     await input.tap();
 
-    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
 
     const aggregateBtn = page.locator("#aggregateBtn");
     await aggregateBtn.tap();
 
-    await expect(aggregateBtn).toBeVisible();
+    await expect(aggregateBtn).toBeFocused();
   });
 
   test("should handle iOS touch-action CSS property", async ({ page }) => {
@@ -199,7 +193,7 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
     const input = page.locator("#addressInput");
     await input.tap();
 
-    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
   });
 
   test("should handle iOS scroll momentum", async ({ page }) => {
@@ -228,9 +222,7 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
     const h1 = page.locator("h1");
     await expect(h1).toBeVisible();
 
-    const initialScale = await page.evaluate(
-      () => window.visualViewport?.scale ?? 1,
-    );
+    const initialScale = await page.evaluate(() => window.visualViewport?.scale ?? 1);
 
     expect(initialScale).toBeCloseTo(1);
   });
@@ -288,7 +280,7 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
     const input = page.locator("#addressInput");
     await input.tap();
 
-    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
 
     const aggregateBtn = page.locator("#aggregateBtn");
     await expect(aggregateBtn).toBeVisible();
@@ -308,17 +300,18 @@ test.describe("Mobile Safari - iOS Specific Behaviors", () => {
 
   test("should handle iOS landscape keyboard layout", async ({ page }) => {
     await page.setViewportSize({ width: 667, height: 375 });
+
     await page.goto("/");
 
     const input = page.locator("#addressInput");
     await input.tap();
 
-    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
 
     const aggregateBtn = page.locator("#aggregateBtn");
     await aggregateBtn.tap();
 
-    await expect(aggregateBtn).toBeVisible();
+    await expect(aggregateBtn).toBeFocused();
   });
 
   test("should handle iOS status bar overlap", async ({ page }) => {

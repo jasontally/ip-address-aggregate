@@ -12,21 +12,55 @@ A static browser application for aggregating and consolidating IPv4 and IPv6 CID
 - **Smart Sorting** - IPv4 sorted first, then IPv6, each sorted numerically
 - **Diff Visualization** - See what changed between input and output
 - **Keyboard Shortcut** - Press Ctrl+Enter to aggregate quickly
-- **Clipboard Export** - Copy aggregated results with one click
+- **Clipboard Export** - Individual copy buttons for input and output panels
+- **Input Preservation** - Original input is preserved and displayed alongside output
 - **Accessible** - WCAG AA compliant with screen reader support, keyboard navigation, and proper color contrast
 - **Offline Ready** - Works entirely in the browser after loading
 
 ## Usage
 
-1. Enter IPv4 and/or IPv6 CIDR addresses in textarea
-   - One address per line, or
-   - Comma-separated, or
-   - Mixed newlines and commas
-   - **Bare IP addresses** are auto-converted (e.g., `10.0.0.0` → `10.0.0.0/32`)
-2. Click the **Aggregate** button (or press Ctrl+Enter) to merge overlapping
-   and adjacent ranges.
-3. View the sorted input and aggregated output with diff highlighting.
-4. Click **Copy** to copy the aggregated results to your clipboard.
+1.  Enter IPv4 and/or IPv6 CIDR addresses in the Input box
+    - One address per line, or
+    - Comma-separated, or
+    - Mixed newlines and commas
+    - **Bare IP addresses** are auto-converted (e.g., `10.0.0.0` → `10.0.0.0/32`)
+2.  Click **Aggregate** button (or press Ctrl+Enter) to merge overlapping
+    and adjacent ranges.
+3.  View the aggregated results in the Output box. Your original input
+    is preserved in the Input box.
+4.  View sorted input and aggregated output with diff highlighting below.
+5.  Click the **Copy** button in either the Input or Output box to copy
+    its contents to your clipboard.
+
+## Supported Input Formats
+
+### IPv4
+
+| Format           | Example                     | Description                            |
+| ---------------- | --------------------------- | -------------------------------------- |
+| CIDR notation    | `192.168.1.0/24`            | Standard CIDR format                   |
+| Bare IP address  | `192.168.1.1`               | Automatically converts to /32          |
+| IP + subnet mask | `192.168.1.0 255.255.255.0` | Space-separated mask, converts to CIDR |
+| IP/subnet mask   | `192.168.1.0/255.255.255.0` | Slash-separated mask, converts to CIDR |
+| IP range (short) | `192.168.1.1-100`           | Expands last octet range to CIDRs      |
+| IP range (full)  | `192.168.1.1-192.168.1.100` | Expands full range to minimal CIDRs    |
+
+### IPv6
+
+| Format            | Example                  | Description                    |
+| ----------------- | ------------------------ | ------------------------------ |
+| CIDR (compressed) | `2001:db8::/32`          | Standard compressed format     |
+| CIDR (expanded)   | `2001:0db8:0000::.../32` | Full expanded format           |
+| Bare address      | `2001:db8::1`            | Automatically converts to /128 |
+| Mixed case        | `2001:DB8::/32`          | Normalized to lowercase        |
+| With zone ID      | `fe80::1%eth0`           | Zone ID stripped with warning  |
+
+### Validation Feedback
+
+- **Yellow warnings**: Entries that were automatically corrected (leading zeros, subnet masks, etc.)
+- **Red errors**: Invalid entries that were skipped
+
+The original input is preserved - normalization happens internally before processing.
 
 ### Example Input
 
@@ -511,6 +545,38 @@ npx serve . -p 8082
 ```
 
 Then open http://localhost:8082 in your browser.
+
+## Testing
+
+The project includes comprehensive E2E test coverage validating IP address aggregation functionality.
+
+### Test Coverage
+
+**19 Comprehensive Scenarios:**
+
+- IPv4: adjacent, overlapping, non-overlapping, non-adjacent merging
+- IPv6: adjacent, overlapping, non-overlapping, non-adjacent merging
+- IPv6 compression: full expansion, zero-compressed, mixed case, leading zeros
+- Bare IPs: auto-conversion to /32 (IPv4) and /128 (IPv6)
+- Mixed: IPv4 + IPv6 together, sorting validation
+- Input formats: newline, comma, mixed separators, extra whitespace
+- Diff highlighting: removed (red), added (green), unchanged
+- Input preservation: original format remains in input box
+
+### Running Tests
+
+```bash
+# Run all E2E tests
+npm run test:e2e
+
+# Run with specific browser
+npm run test:e2e -- --project chromium
+
+# Run with UI mode
+npm run test:e2e:ui
+```
+
+See `ARCHITECTURE.md` for complete testing strategy.
 
 ### Code Coverage
 

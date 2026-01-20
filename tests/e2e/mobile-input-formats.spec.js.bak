@@ -8,10 +8,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Input Format Tests", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(768);
   });
@@ -126,9 +122,7 @@ test.describe("Mobile Input Format Tests", () => {
     await expect(diffContainer).toBeVisible();
   });
 
-  test("should sort IPv4 before IPv6 in results on mobile", async ({
-    page,
-  }) => {
+  test("should sort IPv4 before IPv6 in results on mobile", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -182,10 +176,9 @@ test.describe("Mobile Input Format Tests", () => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    const addresses = Array.from(
-      { length: 50 },
-      (_, i) => `10.${i}.0.0/24`,
-    ).join("\n");
+    const addresses = Array.from({ length: 50 }, (_, i) => `10.${i}.0.0/24`).join(
+      "\n",
+    );
     await input.fill(addresses);
 
     await page.tap("#aggregateBtn");
@@ -228,16 +221,25 @@ test.describe("Mobile Input Format Tests", () => {
     expect(beforeText).toContain("2001:db8::/64");
   });
 
-  test.skip(
-    true,
-    "Tab-separated format is not supported by input parser - only newline and comma separators work",
-  );
+  test("should handle tab-separated input on mobile", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/24\t10.0.0.0/8\t172.16.0.0/12");
+
+    await page.tap("#aggregateBtn");
+
+    const diffContainer = page.locator("#diffContainer");
+    await expect(diffContainer).toBeVisible();
+  });
 
   test("should handle empty lines in input on mobile", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    await input.fill("192.168.1.0/24\n\n\n10.0.0.0/8\n\n172.16.0.0/12");
+    await input.fill(
+      "192.168.1.0/24\n\n\n10.0.0.0/8\n\n172.16.0.0/12",
+    );
 
     await page.tap("#aggregateBtn");
 
@@ -249,7 +251,9 @@ test.describe("Mobile Input Format Tests", () => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    await input.fill("# Network 1\n192.168.1.0/24\n# Network 2\n10.0.0.0/8");
+    await input.fill(
+      "# Network 1\n192.168.1.0/24\n# Network 2\n10.0.0.0/8",
+    );
 
     await page.tap("#aggregateBtn");
 
@@ -275,7 +279,9 @@ test.describe("Mobile Input Format Tests", () => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    await input.fill(" 192.168.1.0/24 , 10.0.0.0/8 , 172.16.0.0/12 ");
+    await input.fill(
+      " 192.168.1.0/24 , 10.0.0.0/8 , 172.16.0.0/12 ",
+    );
 
     await page.tap("#aggregateBtn");
 
@@ -283,9 +289,7 @@ test.describe("Mobile Input Format Tests", () => {
     await expect(diffContainer).toBeVisible();
   });
 
-  test("should handle input with duplicate addresses on mobile", async ({
-    page,
-  }) => {
+  test("should handle input with duplicate addresses on mobile", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -297,9 +301,7 @@ test.describe("Mobile Input Format Tests", () => {
     await expect(diffContainer).toBeVisible();
   });
 
-  test("should handle input in different formats on mobile", async ({
-    page,
-  }) => {
+  test("should handle input in different formats on mobile", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");

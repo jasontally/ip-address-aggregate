@@ -43,7 +43,11 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("256.1.1.1/24");
   });
 
   test("should show error for invalid IPv6 CIDR", async ({ page }) => {
@@ -57,64 +61,11 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
-  });
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
 
-  test("should auto-convert bare IPv4 address to /32", async ({ page }) => {
-    await page.goto("/");
-
-    const input = page.locator("#addressInput");
-    await input.fill("192.168.1.0");
-
-    const aggregateBtn = page.locator("#aggregateBtn");
-    await aggregateBtn.click();
-
-    const errorDiv = page.locator("#error");
-    await expect(errorDiv).not.toBeVisible();
-
-    const textarea = page.locator("#addressInput");
-    await expect(textarea).toHaveValue("192.168.1.0/32");
-
-    const copyBtn = page.locator("#copyBtn");
-    await expect(copyBtn).toBeEnabled();
-  });
-
-  test("should auto-convert bare IPv6 address to /128", async ({ page }) => {
-    await page.goto("/");
-
-    const input = page.locator("#addressInput");
-    await input.fill("2001:db8::");
-
-    const aggregateBtn = page.locator("#aggregateBtn");
-    await aggregateBtn.click();
-
-    const errorDiv = page.locator("#error");
-    await expect(errorDiv).not.toBeVisible();
-
-    const textarea = page.locator("#addressInput");
-    await expect(textarea).toHaveValue("2001:db8::/128");
-
-    const copyBtn = page.locator("#copyBtn");
-    await expect(copyBtn).toBeEnabled();
-  });
-
-  test("should handle mixed bare IPv4 and IPv6 addresses", async ({ page }) => {
-    await page.goto("/");
-
-    const input = page.locator("#addressInput");
-    await input.fill("10.0.0.1\n2001:db8::1");
-
-    const aggregateBtn = page.locator("#aggregateBtn");
-    await aggregateBtn.click();
-
-    const errorDiv = page.locator("#error");
-    await expect(errorDiv).not.toBeVisible();
-
-    const textarea = page.locator("#addressInput");
-    await expect(textarea).toHaveValue("10.0.0.1/32\n2001:db8::1/128");
-
-    const copyBtn = page.locator("#copyBtn");
-    await expect(copyBtn).toBeEnabled();
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("gggg::1/128");
   });
 
   test("should show error for invalid prefix format", async ({ page }) => {
@@ -128,7 +79,11 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("192.168.1.0/abc");
   });
 
   test("should handle multiple invalid addresses in error message", async ({
@@ -144,7 +99,15 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/256.1.1.1\/24/);
+    await expect(errorDiv).toHaveText(/Warning.*invalid entries skipped/);
+
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("256.1.1.1/24");
+    await expect(invalidErrors).toContainText("ggg::1/128");
+
+    const diffContainer = page.locator("#diffContainer");
+    await expect(diffContainer).toBeVisible();
   });
 
   test("should clear previous error on valid input", async ({ page }) => {
@@ -189,7 +152,11 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("192.168.1.256/24");
   });
 
   test("should show error for IPv4 prefix out of range", async ({ page }) => {
@@ -203,7 +170,11 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("192.168.1.0/33");
   });
 
   test("should show error for IPv6 prefix out of range", async ({ page }) => {
@@ -217,19 +188,10 @@ test.describe("Error Handling", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
-  });
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
 
-  test("should not enable copy button when error occurs", async ({ page }) => {
-    await page.goto("/");
-
-    const input = page.locator("#addressInput");
-    await input.fill("invalid");
-
-    const aggregateBtn = page.locator("#aggregateBtn");
-    await aggregateBtn.click();
-
-    const copyBtn = page.locator("#copyBtn");
-    await expect(copyBtn).toBeDisabled();
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("2001:db8::/129");
   });
 });

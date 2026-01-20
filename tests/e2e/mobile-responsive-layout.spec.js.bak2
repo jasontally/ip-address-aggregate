@@ -8,10 +8,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Responsive Layout - Small Breakpoints", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(768);
   });
@@ -31,9 +27,7 @@ test.describe("Mobile Responsive Layout - Small Breakpoints", () => {
     await expect(aggregateBtn).toBeVisible();
   });
 
-  test("should stack input/output vertically on iPhone SE", async ({
-    page,
-  }) => {
+  test("should stack input/output vertically on iPhone SE", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
 
     await page.goto("/");
@@ -65,9 +59,7 @@ test.describe("Mobile Responsive Layout - Small Breakpoints", () => {
     await expect(aggregateBtn).toBeVisible();
   });
 
-  test("should display properly on iPhone 12 Pro Max (428x926)", async ({
-    page,
-  }) => {
+  test("should display properly on iPhone 12 Pro Max (428x926)", async ({ page }) => {
     await page.setViewportSize({ width: 428, height: 926 });
 
     await page.goto("/");
@@ -83,9 +75,7 @@ test.describe("Mobile Responsive Layout - Small Breakpoints", () => {
     await expect(aggregateBtn).toBeVisible();
   });
 
-  test("should display properly on Android small (360x640)", async ({
-    page,
-  }) => {
+  test("should display properly on Android small (360x640)", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 });
 
     await page.goto("/");
@@ -103,12 +93,6 @@ test.describe("Mobile Responsive Layout - Small Breakpoints", () => {
 });
 
 test.describe("Mobile Responsive Layout - Medium Breakpoints", () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
-  });
   test("should display properly on iPad Mini (768x1024)", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
@@ -141,9 +125,7 @@ test.describe("Mobile Responsive Layout - Medium Breakpoints", () => {
     await expect(aggregateBtn).toBeVisible();
   });
 
-  test("should display properly on iPad Pro 10.5 (834x1112)", async ({
-    page,
-  }) => {
+  test("should display properly on iPad Pro 10.5 (834x1112)", async ({ page }) => {
     await page.setViewportSize({ width: 834, height: 1112 });
 
     await page.goto("/");
@@ -177,12 +159,6 @@ test.describe("Mobile Responsive Layout - Medium Breakpoints", () => {
 });
 
 test.describe("Mobile Responsive Layout - Orientation Changes", () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
-  });
   test("should handle portrait to landscape rotation", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
@@ -236,12 +212,7 @@ test.describe("Mobile Responsive Layout - Orientation Changes", () => {
     const landscapeBeforeBox = await beforeColumn.boundingBox();
     const landscapeAfterBox = await afterColumn.boundingBox();
 
-    if (
-      portraitBeforeBox &&
-      portraitAfterBox &&
-      landscapeBeforeBox &&
-      landscapeAfterBox
-    ) {
+    if (portraitBeforeBox && portraitAfterBox && landscapeBeforeBox && landscapeAfterBox) {
       expect(portraitBeforeBox.y).toBeLessThanOrEqual(portraitAfterBox.y);
       expect(landscapeBeforeBox.x).toBeLessThanOrEqual(landscapeAfterBox.x);
     }
@@ -249,12 +220,6 @@ test.describe("Mobile Responsive Layout - Orientation Changes", () => {
 });
 
 test.describe("Mobile Responsive Layout - Diff Container", () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
-  });
   test("should display diff container vertically on small screens", async ({
     page,
   }) => {
@@ -315,10 +280,9 @@ test.describe("Mobile Responsive Layout - Diff Container", () => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    const addresses = Array.from(
-      { length: 20 },
-      (_, i) => `10.${i}.0.0/24`,
-    ).join("\n");
+    const addresses = Array.from({ length: 20 }, (_, i) => `10.${i}.0.0/24`).join(
+      "\n",
+    );
     await input.fill(addresses);
 
     await page.tap("#aggregateBtn");
@@ -330,12 +294,6 @@ test.describe("Mobile Responsive Layout - Diff Container", () => {
 });
 
 test.describe("Mobile Responsive Layout - Action Toolbar", () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
-  });
   test("should stack toolbar items vertically on small screens", async ({
     page,
   }) => {
@@ -354,10 +312,23 @@ test.describe("Mobile Responsive Layout - Action Toolbar", () => {
     }
   });
 
-  test.skip(
-    true,
-    "Test uses breakpoint at CSS media query boundary - layout may vary between 767 and 768px width",
-  );
+  test("should display toolbar items horizontally on larger screens", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+
+    await page.goto("/");
+
+    const select = page.locator("#operationSelect");
+    const aggregateBtn = page.locator("#aggregateBtn");
+
+    const selectBox = await select.boundingBox();
+    const btnBox = await aggregateBtn.boundingBox();
+
+    if (selectBox && btnBox) {
+      expect(selectBox.y).toBe(btnBox.y);
+    }
+  });
 
   test("should ensure toolbar buttons are tappable on small screens", async ({
     page,
@@ -376,12 +347,6 @@ test.describe("Mobile Responsive Layout - Action Toolbar", () => {
 });
 
 test.describe("Mobile Responsive Layout - Modal", () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
-  });
   test("should display modal properly on small screens", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
@@ -436,12 +401,6 @@ test.describe("Mobile Responsive Layout - Modal", () => {
 });
 
 test.describe("Mobile Responsive Layout - Footer", () => {
-  test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
-  });
   test("should display footer properly on small screens", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 

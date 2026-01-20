@@ -1,0 +1,331 @@
+/**
+ * Mobile Error Handling E2E tests
+ * Copyright (c) 2025 Jason Tally and contributors
+ * SPDX-License-Identifier: MIT
+ */
+
+import { test, expect } from "@playwright/test";
+
+test.describe("Mobile Error Handling", () => {
+  test.skip(({ project }) => {
+    return !project.name.toLowerCase().includes("mobile");
+  }, "Mobile tests only run on mobile devices");
+
+  test.beforeEach(async ({ page }) => {
+    const viewport = page.viewportSize();
+    expect(viewport.width).toBeLessThanOrEqual(768);
+  });
+
+  test("should show error for invalid IPv4 CIDR on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("256.1.1.1/24");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+
+    const invalidErrors = page.locator("#invalidErrors");
+    await expect(invalidErrors).toBeVisible();
+    await expect(invalidErrors).toContainText("256.1.1.1/24");
+  });
+
+  test("should show error message for empty input on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/at least one/);
+  });
+
+  test("should show error for invalid IPv4 CIDR on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("256.1.1.1/24");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+  });
+
+  test("should show error for invalid IPv6 CIDR on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("gggg::1/128");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+  });
+
+  test("should display error message above controls on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid cidr");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    const aggregateBtnBox = await aggregateBtn.boundingBox();
+    const errorBox = await errorDiv.boundingBox();
+
+    if (errorBox && aggregateBtnBox) {
+      expect(errorBox.y).toBeLessThan(aggregateBtnBox.y);
+    }
+  });
+
+  test("should clear error when user starts typing", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+
+    await input.clear();
+    await input.fill("192.168.1.0/24");
+
+    await aggregateBtn.tap();
+
+    await expect(errorDiv).not.toBeVisible();
+  });
+
+  test("should show error for whitespace-only input on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("   \n   ");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/at least one/);
+  });
+
+  test("should not show modal when error occurs on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid cidr");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const modal = page.locator("#processingModal");
+    await expect(modal).not.toBeVisible();
+  });
+
+  test("should show error for IPv4 prefix out of range on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/33");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+  });
+
+  test("should show error for IPv6 prefix out of range on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("2001:db8::/129");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+  });
+
+  test("should handle multiple invalid addresses in error message on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("256.1.1.1/24\nggg::1/128\n192.168.1.0/24");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/256.1.1.1\/24/);
+  });
+
+  test("should maintain error visibility on small mobile screens", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid cidr");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toBeInViewport();
+  });
+
+  test("should show error for invalid prefix format on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.0/abc");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+  });
+
+  test("should show error for invalid IPv4 octets on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("192.168.1.256/24");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+    await expect(errorDiv).toHaveText(/All.*entries are invalid/);
+  });
+
+  test("should clear previous error on valid input on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+
+    await input.fill("192.168.1.0/24");
+    await aggregateBtn.tap();
+
+    await expect(errorDiv).not.toBeVisible();
+  });
+
+  test("should handle error message text wrapping on small screens", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill(
+      "invalid.address.that.will.generate.a.very.long.error.message",
+    );
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+
+    const errorBox = await errorDiv.boundingBox();
+    if (errorBox) {
+      expect(errorBox.width).toBeLessThanOrEqual(320);
+    }
+  });
+
+  test("should maintain error visibility with touch keyboard open", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toBeVisible();
+
+    await input.tap();
+    await expect(errorDiv).toBeVisible();
+  });
+
+  test("should show error message with aria-live on mobile", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill("invalid cidr");
+
+    const aggregateBtn = page.locator("#aggregateBtn");
+    await aggregateBtn.tap();
+
+    const errorDiv = page.locator("#error");
+    await expect(errorDiv).toHaveAttribute("aria-live", "polite");
+    await expect(errorDiv).toHaveAttribute("aria-atomic", "true");
+    await expect(errorDiv).toHaveAttribute("role", "alert");
+  });
+});

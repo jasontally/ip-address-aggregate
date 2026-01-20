@@ -26,10 +26,7 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://agg.jasontally.com/" />
-    <meta
-      property="og:title"
-      content="Visual IP Address Aggregation Tool"
-    />
+    <meta property="og:title" content="Visual IP Address Aggregation Tool" />
     <meta
       property="og:description"
       content="Aggregate IPv4 and IPv6 CIDR ranges for cleaner network documentation. Format and convert addresses."
@@ -473,6 +470,66 @@
           min-width: 100%;
         }
       }
+
+      .validation-panel {
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+
+      .corrected-warnings {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 8px;
+        margin-bottom: 8px;
+        color: #856404;
+      }
+
+      .corrected-warnings:empty {
+        display: none;
+      }
+
+      .invalid-errors {
+        background: #f8d7da;
+        border: 1px solid #dc3545;
+        border-radius: 4px;
+        padding: 8px;
+        color: #721c24;
+      }
+
+      .invalid-errors:empty {
+        display: none;
+      }
+
+      .validation-item {
+        margin: 4px 0;
+      }
+
+      .validation-item::before {
+        margin-right: 6px;
+      }
+
+      .corrected-warnings .validation-item::before {
+        content: "⚠️";
+      }
+
+      .invalid-errors .validation-item::before {
+        content: "❌";
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .corrected-warnings {
+          background: #5c4813;
+          border-color: #a37e0c;
+          color: #ffc107;
+        }
+
+        .invalid-errors {
+          background: #5c1a1a;
+          border-color: #a32929;
+          color: #f8d7da;
+        }
+      }
     </style>
   </head>
   <body>
@@ -492,32 +549,74 @@
 
         <div class="input-output-container">
           <div class="text-editor-wrapper">
-              <div class="editor-header">
-                <label for="addressInput">Input</label>
-                <button class="icon-button copy-input-btn" onclick="copyInput()" title="Copy input" aria-label="Copy input">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                  </svg>
-                </button>
-              </div>
+            <div class="editor-header">
+              <label for="addressInput">Input</label>
+              <button
+                class="icon-button copy-input-btn"
+                onclick="copyInput()"
+                title="Copy input"
+                aria-label="Copy input"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path
+                    d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                  />
+                </svg>
+              </button>
+            </div>
             <textarea
               id="addressInput"
               placeholder="Enter IPv4 or IPv6 CIDR addresses (one per line or comma-separated)&#10;Examples:&#10;192.168.1.0/24&#10;192.168.2.0/24&#10;2001:db8::/32&#10;2001:db8:1::/48"
               aria-label="IP address input"
             ></textarea>
+            <div
+              id="inputValidation"
+              class="validation-panel"
+              style="display: none"
+            >
+              <div id="correctedWarnings" class="corrected-warnings"></div>
+              <div id="invalidErrors" class="invalid-errors"></div>
+            </div>
           </div>
 
           <div class="text-editor-wrapper">
-              <div class="editor-header">
-                <label for="addressOutput">Output</label>
-                <button class="icon-button copy-output-btn" onclick="copyOutput()" title="Copy output" aria-label="Copy output">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                  </svg>
-                </button>
-              </div>
+            <div class="editor-header">
+              <label for="addressOutput">Output</label>
+              <button
+                class="icon-button copy-output-btn"
+                onclick="copyOutput()"
+                title="Copy output"
+                aria-label="Copy output"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path
+                    d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                  />
+                </svg>
+              </button>
+            </div>
             <textarea
               id="addressOutput"
               readonly
@@ -527,36 +626,84 @@
           </div>
         </div>
 
-        <div id="error" class="error" role="alert" aria-live="polite" aria-atomic="true"></div>
+        <div
+          id="error"
+          class="error"
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+        ></div>
       </div>
 
-    <div id="diffContainer" class="diff-container" aria-live="polite">
-      <div class="diff-columns">
+      <div id="diffContainer" class="diff-container" aria-live="polite">
+        <div class="diff-columns">
           <div class="diff-wrapper">
             <div class="diff-header">
               <label>Sorted Input</label>
-              <button class="icon-button copy-before-btn" onclick="copyBeforeColumn()" title="Copy input" aria-label="Copy input">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-              </svg>
-            </button>
+              <button
+                class="icon-button copy-before-btn"
+                onclick="copyBeforeColumn()"
+                title="Copy input"
+                aria-label="Copy input"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path
+                    d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div
+              id="beforeColumn"
+              class="diff-column"
+              aria-label="Input addresses"
+            ></div>
           </div>
-          <div id="beforeColumn" class="diff-column" aria-label="Input addresses"></div>
-        </div>
           <div class="diff-wrapper">
             <div class="diff-header">
               <label>Output</label>
-              <button class="icon-button copy-after-btn" onclick="copyAfterColumn()" title="Copy output" aria-label="Copy output">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-              </svg>
-            </button>
+              <button
+                class="icon-button copy-after-btn"
+                onclick="copyAfterColumn()"
+                title="Copy output"
+                aria-label="Copy output"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path
+                    d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div
+              id="afterColumn"
+              class="diff-column"
+              aria-label="Output addresses"
+            ></div>
           </div>
-          <div id="afterColumn" class="diff-column" aria-label="Output addresses"></div>
         </div>
-      </div>
       </div>
     </main>
 
@@ -564,12 +711,12 @@
       <div class="footer-section">
         <h2>How to Use</h2>
         <p>
-          Enter IPv4 and/or IPv6 CIDR addresses in the textarea (one per line
-          or comma-separated).
+          Enter IPv4 and/or IPv6 CIDR addresses in the textarea (one per line or
+          comma-separated).
         </p>
         <p>
-          Click the Go button (or press Ctrl+Enter) to merge overlapping
-          and adjacent ranges.
+          Click the Go button (or press Ctrl+Enter) to merge overlapping and
+          adjacent ranges.
         </p>
         <p>
           Click Copy to copy the aggregated results to your clipboard for easy
@@ -601,22 +748,23 @@
       <div class="footer-section">
         <p>
           Created by
-          <a href="https://JasonTally.com" target="_blank">Jason Tally</a>.
-          Code is available on
-          <a href="https://github.com/jasontally/ip-address-aggregate" target="_blank"
+          <a href="https://JasonTally.com" target="_blank">Jason Tally</a>. Code
+          is available on
+          <a
+            href="https://github.com/jasontally/ip-address-aggregate"
+            target="_blank"
             >GitHub</a
           >.
         </p>
       </div>
 
-      <div
-        class="footer-section"
-        style="text-align: center; color: #666; font-size: 12px"
-      >
-         Version 1.0.5
-      </div>
-    </footer>
+       <div
+         class="footer-section"
+         style="text-align: center; color: #666; font-size: 12px"
+       >
+         Version 1.0.7
+       </div>
 
-    <script type="module" src="app.js?v=1.0.5"></script>
+     <script type="module" src="app.js?v=1.0.7"></script>
   </body>
 </html>

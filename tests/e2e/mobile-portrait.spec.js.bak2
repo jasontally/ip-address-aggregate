@@ -8,18 +8,12 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Portrait - Basic Flow", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Portrait"),
-      "Portrait tests only run on mobile portrait devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(viewport.height);
   });
   test("should load page and show title in portrait", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText(
-      "Visual IP Address Aggregation Tool",
-    );
+    await expect(page.locator("h1")).toHaveText("IP Address Tools");
   });
 
   test("should aggregate addresses in portrait mode", async ({ page }) => {
@@ -67,7 +61,7 @@ test.describe("Mobile Portrait - Basic Flow", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/invalid/);
+    await expect(errorDiv).toHaveText(/Invalid CIDR/);
   });
 
   test("should handle copy button functionality in portrait", async ({
@@ -107,10 +101,6 @@ test.describe("Mobile Portrait - Basic Flow", () => {
 
 test.describe("Mobile Portrait - Responsive Layout", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Portrait"),
-      "Portrait tests only run on mobile portrait devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(viewport.height);
   });
@@ -141,10 +131,9 @@ test.describe("Mobile Portrait - Responsive Layout", () => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    const addresses = Array.from(
-      { length: 20 },
-      (_, i) => `10.${i}.0.0/24`,
-    ).join("\n");
+    const addresses = Array.from({ length: 20 }, (_, i) => `10.${i}.0.0/24`).join(
+      "\n",
+    );
     await input.fill(addresses);
 
     await page.click("#aggregateBtn");

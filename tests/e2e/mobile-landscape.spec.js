@@ -8,12 +8,18 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Landscape - Basic Flow", () => {
   test.beforeEach(async ({ page }) => {
+    test.skip(
+      !test.info().project.name.includes("Landscape"),
+      "Landscape tests only run on mobile landscape devices",
+    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeGreaterThan(viewport.height);
   });
   test("should load page and show title in landscape", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText("IP Address Tools");
+    await expect(page.locator("h1")).toHaveText(
+      "Visual IP Address Aggregation Tool",
+    );
   });
 
   test("should aggregate addresses in landscape mode", async ({ page }) => {
@@ -61,7 +67,7 @@ test.describe("Mobile Landscape - Basic Flow", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/Invalid CIDR/);
+    await expect(errorDiv).toHaveText(/invalid/);
   });
 
   test("should handle copy button functionality in landscape", async ({
@@ -101,6 +107,10 @@ test.describe("Mobile Landscape - Basic Flow", () => {
 
 test.describe("Mobile Landscape - Responsive Layout", () => {
   test.beforeEach(async ({ page }) => {
+    test.skip(
+      !test.info().project.name.includes("Landscape"),
+      "Landscape tests only run on mobile landscape devices",
+    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeGreaterThan(viewport.height);
   });
@@ -139,7 +149,9 @@ test.describe("Mobile Landscape - Responsive Layout", () => {
     await expect(diffContainer).toBeVisible();
   });
 
-  test("should display all controls in landscape viewport", async ({ page }) => {
+  test("should display all controls in landscape viewport", async ({
+    page,
+  }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -152,6 +164,10 @@ test.describe("Mobile Landscape - Responsive Layout", () => {
 
 test.describe("Mobile Landscape - Input Handling", () => {
   test.beforeEach(async ({ page }) => {
+    test.skip(
+      !test.info().project.name.includes("Landscape"),
+      "Landscape tests only run on mobile landscape devices",
+    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeGreaterThan(viewport.height);
   });

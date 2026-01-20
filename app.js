@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { merge } from "https://esm.sh/cidr-tools@8.0.0";
+import { merge } from "https://esm.sh/fast-cidr-tools@0.3.4";
 import { diffLines } from "https://esm.sh/diff@5.1.0";
+import {
+  normalizeInput,
+  extractValidCIDRs,
+  getNormalizationSummary,
+  NormalizationStatus,
+} from "./normalizer.js";
 
 const IPVersion = {
   IPv4: "ipv4",
@@ -179,15 +185,28 @@ class CIDRBlock {
     this.address = normalizeAddress(address, version);
     this.prefix = prefix;
     this.version = version;
+    this._expandedAddress =
+      version === IPVersion.IPv6 ? expandIPv6(address) : address;
     this.startAddress = calculateStartAddress(this);
     this.endAddress = calculateEndAddress(this);
   }
 
+  get expandedAddress() {
+    return this._expandedAddress || this.address;
+  }
+
   toCIDRString() {
-    if (this.version === IPVersion.IPv6) {
-      return `${compressIPv6(this.address)}/${this.prefix}`;
+    return this.version === IPVersion.IPv6
+      ? compressIPv6(this.expandedAddress) + "/" + this.prefix
+      : this.address + "/" + this.prefix;
+  }
+
+  static compressIPv6(address) {
+    const bytes = [];
+    for (let i = 0; i < 8; i++) {
+      bytes[i] = Number((BigInt(address) >> BigInt(8 * i)) & BigInt(255));
     }
-    return `${this.address}/${this.prefix}`;
+    return bytes.map((b, i) => b.toString(16).padStart(2, "0")).join(":");
   }
 
   toStartAddress() {
@@ -705,6 +724,20 @@ function sortCIDRModels(cidrModels) {
         return a.startAddress - b.startAddress;
       }
       return a.prefix - b.prefix;
+    }
+
+    const aExpanded = a.expandedAddress;
+    const bExpanded = b.expandedAddress;
+
+    if (aExpanded !== bExpanded) {
+      return aExpanded < bExpanded ? -1 : 1;
+    }
+
+    if (a.version === IPVersion.IPv4) {
+      if (a.startAddress !== b.startAddress) {
+        return a.startAddress - b.startAddress;
+      }
+      return a.prefix - b.prefix;
     } else {
       if (a.startAddress !== b.startAddress) {
         return a.startAddress < b.startAddress ? -1 : 1;
@@ -1107,28 +1140,82 @@ function hideModal() {
 }
 
 /**
- * Main aggregation function
+ * Display validation feedback in the UI
+ * @param {NormalizationResult[]} results
+ */
+function displayValidationFeedback(results) {
+  const panel = document.getElementById("inputValidation");
+  const warningsDiv = document.getElementById("correctedWarnings");
+  const errorsDiv = document.getElementById("invalidErrors");
+
+  const corrected = results.filter(
+    (r) => r.status === NormalizationStatus.CORRECTED,
+  );
+  const invalid = results.filter(
+    (r) => r.status === NormalizationStatus.INVALID,
+  );
+
+  // Build warnings HTML
+  if (corrected.length > 0) {
+    warningsDiv.innerHTML = corrected
+      .map(
+        (r) =>
+          `<div class="validation-item">Line ${r.lineNumber}: ${r.warning || "Auto-corrected"}</div>`,
+      )
+      .join("");
+  } else {
+    warningsDiv.innerHTML = "";
+  }
+
+  // Build errors HTML
+  if (invalid.length > 0) {
+    errorsDiv.innerHTML = invalid
+      .map(
+        (r) =>
+          `<div class="validation-item">Line ${r.lineNumber}: "${r.original}" - ${r.error}</div>`,
+      )
+      .join("");
+  } else {
+    errorsDiv.innerHTML = "";
+  }
+
+  // Show/hide panel
+  panel.style.display =
+    corrected.length > 0 || invalid.length > 0 ? "block" : "none";
+}
+
+/**
+ * Main processing function
  * @returns {Promise<void>}
  */
 async function aggregateAddresses() {
   const inputTextarea = document.getElementById("addressInput");
+  const outputTextarea = document.getElementById("addressOutput");
   const errorDiv = document.getElementById("error");
-  const copyBtn = document.getElementById("copyBtn");
 
   errorDiv.textContent = "";
 
   const inputText = inputTextarea.value;
-  const cidrStrings = parseInput(inputText);
+
+  // Use normalizer
+  const normalizationResults = normalizeInput(inputText);
+  displayValidationFeedback(normalizationResults);
+
+  const cidrStrings = extractValidCIDRs(normalizationResults);
+  const summary = getNormalizationSummary(normalizationResults);
 
   if (cidrStrings.length === 0) {
-    errorDiv.textContent = "Please enter at least one IP address or CIDR";
+    if (summary.invalid > 0) {
+      errorDiv.textContent = `All ${summary.invalid} entries are invalid. See details above.`;
+    } else {
+      errorDiv.textContent = "Please enter at least one IP address or CIDR";
+    }
     return;
   }
 
-  const invalidCIDRs = cidrStrings.filter((cidr) => !isValidCIDR(cidr));
-  if (invalidCIDRs.length > 0) {
-    errorDiv.textContent = `Invalid CIDR format: ${invalidCIDRs.slice(0, 3).join(", ")}${invalidCIDRs.length > 3 ? "..." : ""}`;
-    return;
+  // Show warning if some entries were skipped
+  if (summary.invalid > 0) {
+    errorDiv.textContent = `Warning: ${summary.invalid} invalid entries skipped. Processing ${cidrStrings.length} valid entries.`;
   }
 
   const startTime = Date.now();
@@ -1143,8 +1230,6 @@ async function aggregateAddresses() {
     const sortedStrings = sorted.map((m) => m.toCIDRString());
     sortedInput = sortedStrings.join("\n");
 
-    inputTextarea.value = sortedInput;
-
     const aggregatedStrings = aggregateCIDRs(sortedStrings);
     const aggregatedModels = aggregatedStrings.map((s) => {
       return CIDRBlock.fromCIDRString(s);
@@ -1158,8 +1243,7 @@ async function aggregateAddresses() {
     const diffParts = generateDiff(sortedStrings, aggregatedStrings);
     renderDiff(diffParts);
 
-    inputTextarea.value = transformedOutput;
-    copyBtn.disabled = false;
+    outputTextarea.value = transformedOutput;
 
     const elapsedTime = Date.now() - startTime;
     const minTime = 1500;
@@ -1167,36 +1251,38 @@ async function aggregateAddresses() {
 
     await new Promise((resolve) => setTimeout(resolve, remainingTime));
   } catch (e) {
-    errorDiv.textContent = `Error during aggregation: ${e.message}`;
+    errorDiv.textContent = `Error during transformation: ${e.message}`;
   } finally {
     hideModal();
   }
 }
 
 /**
- * Copy results to clipboard
+ * Copy input to clipboard
  * @returns {Promise<void>}
  */
-async function copyResults() {
-  const textarea = document.getElementById("addressInput");
-  const text = textarea.value;
-  const copyBtn = document.getElementById("copyBtn");
+async function copyInput() {
+  const inputTextarea = document.getElementById("addressInput");
+  const copyBtn = document.querySelector(".copy-input-btn");
 
-  if (!text) {
+  if (!inputTextarea.value.trim()) {
+    alert("No input to copy");
     return;
   }
 
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(inputTextarea.value);
 
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = "Copied!";
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
     setTimeout(() => {
-      copyBtn.textContent = originalText;
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
     }, 2000);
   } catch (err) {
     const textareaCopy = document.createElement("textarea");
-    textareaCopy.value = text;
+    textareaCopy.value = inputTextarea.value;
     textareaCopy.style.position = "fixed";
     textareaCopy.style.opacity = "0";
     document.body.appendChild(textareaCopy);
@@ -1204,10 +1290,141 @@ async function copyResults() {
     document.execCommand("copy");
     document.body.removeChild(textareaCopy);
 
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = "Copied!";
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
     setTimeout(() => {
-      copyBtn.textContent = originalText;
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
+    }, 2000);
+  }
+}
+
+/**
+ * Copy output to clipboard
+ * @returns {Promise<void>}
+ */
+async function copyOutput() {
+  const outputTextarea = document.getElementById("addressOutput");
+  const copyBtn = document.querySelector(".copy-output-btn");
+
+  if (!outputTextarea.value.trim()) {
+    alert("No output to copy");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(outputTextarea.value);
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
+    setTimeout(() => {
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
+    }, 2000);
+  } catch (err) {
+    const textareaCopy = document.createElement("textarea");
+    textareaCopy.value = outputTextarea.value;
+    textareaCopy.style.position = "fixed";
+    textareaCopy.style.opacity = "0";
+    document.body.appendChild(textareaCopy);
+    textareaCopy.select();
+    document.execCommand("copy");
+    document.body.removeChild(textareaCopy);
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
+    setTimeout(() => {
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
+    }, 2000);
+  }
+}
+
+/**
+ * Copy before column (sorted input) to clipboard
+ * @returns {Promise<void>}
+ */
+async function copyBeforeColumn() {
+  const beforeColumn = document.getElementById("beforeColumn");
+  const copyBtn = document.querySelector(".copy-before-btn");
+
+  if (!beforeColumn.textContent.trim()) {
+    alert("No input to copy");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(beforeColumn.textContent);
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
+    setTimeout(() => {
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
+    }, 2000);
+  } catch (err) {
+    const textareaCopy = document.createElement("textarea");
+    textareaCopy.value = beforeColumn.textContent;
+    textareaCopy.style.position = "fixed";
+    textareaCopy.style.opacity = "0";
+    document.body.appendChild(textareaCopy);
+    textareaCopy.select();
+    document.execCommand("copy");
+    document.body.removeChild(textareaCopy);
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
+    setTimeout(() => {
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
+    }, 2000);
+  }
+}
+
+/**
+ * Copy after column (aggregated output) to clipboard
+ * @returns {Promise<void>}
+ */
+async function copyAfterColumn() {
+  const afterColumn = document.getElementById("afterColumn");
+  const copyBtn = document.querySelector(".copy-after-btn");
+
+  if (!afterColumn.textContent.trim()) {
+    alert("No output to copy");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(afterColumn.textContent);
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
+    setTimeout(() => {
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
+    }, 2000);
+  } catch (err) {
+    const textareaCopy = document.createElement("textarea");
+    textareaCopy.value = afterColumn.textContent;
+    textareaCopy.style.position = "fixed";
+    textareaCopy.style.opacity = "0";
+    document.body.appendChild(textareaCopy);
+    textareaCopy.select();
+    document.execCommand("copy");
+    document.body.removeChild(textareaCopy);
+
+    const originalContent = copyBtn.innerHTML;
+    copyBtn.classList.add("checkmark");
+    copyBtn.textContent = "✓";
+    setTimeout(() => {
+      copyBtn.classList.remove("checkmark");
+      copyBtn.innerHTML = originalContent;
     }, 2000);
   }
 }
@@ -1229,8 +1446,12 @@ function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
+window.processAddresses = aggregateAddresses;
 window.aggregateAddresses = aggregateAddresses;
-window.copyResults = copyResults;
+window.copyInput = copyInput;
+window.copyOutput = copyOutput;
+window.copyBeforeColumn = copyBeforeColumn;
+window.copyAfterColumn = copyAfterColumn;
 
 export {
   IPVersion,
@@ -1254,7 +1475,10 @@ export {
   showModal,
   hideModal,
   aggregateAddresses,
-  copyResults,
+  copyInput,
+  copyOutput,
+  copyBeforeColumn,
+  copyAfterColumn,
   init,
   expandIPv6,
   compressIPv6,

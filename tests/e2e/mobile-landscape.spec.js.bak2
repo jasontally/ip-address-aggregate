@@ -1,28 +1,22 @@
 /**
- * Mobile Portrait E2E tests
+ * Mobile Landscape E2E tests
  * Copyright (c) 2025 Jason Tally and contributors
  * SPDX-License-Identifier: MIT
  */
 
 import { test, expect } from "@playwright/test";
 
-test.describe("Mobile Portrait - Basic Flow", () => {
+test.describe("Mobile Landscape - Basic Flow", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Portrait"),
-      "Portrait tests only run on mobile portrait devices",
-    );
     const viewport = page.viewportSize();
-    expect(viewport.width).toBeLessThanOrEqual(viewport.height);
+    expect(viewport.width).toBeGreaterThan(viewport.height);
   });
-  test("should load page and show title in portrait", async ({ page }) => {
+  test("should load page and show title in landscape", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText(
-      "Visual IP Address Aggregation Tool",
-    );
+    await expect(page.locator("h1")).toHaveText("IP Address Tools");
   });
 
-  test("should aggregate addresses in portrait mode", async ({ page }) => {
+  test("should aggregate addresses in landscape mode", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -37,7 +31,7 @@ test.describe("Mobile Portrait - Basic Flow", () => {
     await expect(afterColumn).toContainText("192.168.1.0/24");
   });
 
-  test("should show modal with minimum 1.5s duration in portrait", async ({
+  test("should show modal with minimum 1.5s duration in landscape", async ({
     page,
   }) => {
     await page.goto("/");
@@ -57,7 +51,7 @@ test.describe("Mobile Portrait - Basic Flow", () => {
     expect(elapsedTime).toBeGreaterThanOrEqual(1500);
   });
 
-  test("should handle error display in portrait mode", async ({ page }) => {
+  test("should handle error display in landscape mode", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -67,10 +61,10 @@ test.describe("Mobile Portrait - Basic Flow", () => {
 
     const errorDiv = page.locator("#error");
     await expect(errorDiv).toBeVisible();
-    await expect(errorDiv).toHaveText(/invalid/);
+    await expect(errorDiv).toHaveText(/Invalid CIDR/);
   });
 
-  test("should handle copy button functionality in portrait", async ({
+  test("should handle copy button functionality in landscape", async ({
     page,
   }) => {
     await page.goto("/");
@@ -84,7 +78,7 @@ test.describe("Mobile Portrait - Basic Flow", () => {
     await expect(copyBtn).toHaveText("✓");
   });
 
-  test("should handle mixed IPv4 and IPv6 in portrait", async ({ page }) => {
+  test("should handle mixed IPv4 and IPv6 in landscape", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -105,16 +99,12 @@ test.describe("Mobile Portrait - Basic Flow", () => {
   });
 });
 
-test.describe("Mobile Portrait - Responsive Layout", () => {
+test.describe("Mobile Landscape - Responsive Layout", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Portrait"),
-      "Portrait tests only run on mobile portrait devices",
-    );
     const viewport = page.viewportSize();
-    expect(viewport.width).toBeLessThanOrEqual(viewport.height);
+    expect(viewport.width).toBeGreaterThan(viewport.height);
   });
-  test("should stack columns vertically in portrait", async ({ page }) => {
+  test("should display columns side by side in landscape", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
@@ -134,26 +124,57 @@ test.describe("Mobile Portrait - Responsive Layout", () => {
     const beforeBox = await beforeColumn.boundingBox();
     const afterBox = await afterColumn.boundingBox();
 
-    expect(beforeBox.y).toBeLessThanOrEqual(afterBox.y);
+    expect(beforeBox.x).toBeLessThanOrEqual(afterBox.x);
   });
 
-  test("should handle scrollable content in portrait", async ({ page }) => {
+  test("should handle wide content in landscape", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
-    const addresses = Array.from(
-      { length: 20 },
-      (_, i) => `10.${i}.0.0/24`,
-    ).join("\n");
-    await input.fill(addresses);
+    await input.fill("192.168.1.0/24\n10.0.0.0/8");
 
     await page.click("#aggregateBtn");
 
     const diffContainer = page.locator("#diffContainer");
     await expect(diffContainer).toBeVisible();
+  });
 
-    const beforeColumn = page.locator("#beforeColumn");
-    await beforeColumn.scrollIntoViewIfNeeded();
-    await expect(beforeColumn).toBeVisible();
+  test("should display all controls in landscape viewport", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    const aggregateBtn = page.locator("#aggregateBtn");
+
+    await expect(input).toBeVisible();
+    await expect(aggregateBtn).toBeVisible();
+  });
+});
+
+test.describe("Mobile Landscape - Input Handling", () => {
+  test.beforeEach(async ({ page }) => {
+    const viewport = page.viewportSize();
+    expect(viewport.width).toBeGreaterThan(viewport.height);
+  });
+  test("should handle keyboard visibility in landscape", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.click();
+
+    await expect(input).toBeFocused();
+  });
+
+  test("should handle long CIDR strings in landscape", async ({ page }) => {
+    await page.goto("/");
+
+    const input = page.locator("#addressInput");
+    await input.fill(
+      "2001:0db8:0000:0000:0000:ff00:0042:8329/64\n2001:0db8:0000:0000:0000:ff00:0042:8330/64",
+    );
+
+    await page.click("#aggregateBtn");
+
+    const diffContainer = page.locator("#diffContainer");
+    await expect(diffContainer).toBeVisible();
   });
 });

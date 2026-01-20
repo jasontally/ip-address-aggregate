@@ -14,7 +14,7 @@ IP Address Aggregate is a static single-page web application that runs entirely 
 
 ## File Structure
 
-```
+````
 ip-aggregate/
 ├── index.html           # HTML with embedded CSS
 ├── app.js               # ES6 module with all logic
@@ -31,11 +31,12 @@ ip-aggregate/
     ├── transformers.test.js   # Format transformer tests
     ├── ipv6.test.js          # IPv6 utility tests
     └── e2e/
-        ├── basic-flow.spec.js     # Main user flow
-        ├── input-formats.spec.js  # Various input formats
-        ├── copy-button.spec.js    # Clipboard functionality
-        └── error-handling.spec.js # Invalid input scenarios
-```
+        ├── basic-flow.spec.js                    # Main user flow
+        ├── input-formats.spec.js                 # Various input formats
+        ├── copy-button.spec.js                  # Clipboard functionality
+        └── error-handling.spec.js              # Invalid input scenarios
+    ├── tests.md                            # Comprehensive test scenarios with inputs/outputs
+    └── coverage/                              # Coverage report data
 
 ## Core Modules
 
@@ -80,6 +81,43 @@ Rich model representing both IPv4 and IPv6 CIDR blocks with version awareness.
 - `isValidIPv4(address, prefix)` - Validate IPv4 address and prefix
 - `isValidIPv6(address, prefix)` - Validate IPv6 address and prefix
 - `parseIPv6(addr)` - Parse IPv6 address to 16-byte array
+
+### Normalizer Module (normalizer.js)
+
+The normalizer module handles all input format detection, validation, and normalization.
+
+#### Key Functions
+
+- `normalizeInput(text)` - Main entry point, returns array of NormalizationResult
+- `normalizeEntry(entry)` - Normalize single entry
+- `extractValidCIDRs(results)` - Get valid CIDR strings from results
+- `subnetMaskToCIDRPrefix(mask)` - Convert subnet mask to prefix length
+- `expandIPv4Range(start, end)` - Expand IP range to minimal CIDR set
+- `getNormalizationSummary(results)` - Get summary statistics
+
+#### NormalizationResult Structure
+
+```javascript
+{
+  original: string,        // Original input text
+  normalized: string|null, // Normalized CIDR or null if invalid
+  status: 'valid' | 'corrected' | 'invalid',
+  warning: string|null,    // Warning message if corrected
+  error: string|null,      // Error message if invalid
+  expandedTo: string[],    // Array of CIDRs (for ranges)
+  lineNumber: number       // 1-based line number from input
+}
+````
+
+#### Processing Flow
+
+1. Input split by newlines and commas
+2. Each entry passed to `normalizeEntry()`
+3. Format detection (IPv4 vs IPv6)
+4. Format-specific parsing and validation
+5. Normalization (leading zeros, case, subnet masks)
+6. Range expansion if applicable
+7. Results collected with status and metadata
 
 ### IPv6 Utilities
 
@@ -156,14 +194,16 @@ Central registry of all format transformers:
   - Sorts addresses with version awareness
   - Aggregates ranges
   - Applies format transformation
+  - Renders output to output textarea (preserving input)
   - Renders diff
   - Ensures minimum 1.5s modal display
-- `copyResults()` - Copy results to clipboard with feedback
+- `copyInput()` - Copy input textarea contents to clipboard with feedback
+- `copyOutput()` - Copy output textarea contents to clipboard with feedback
 
 ## Data Flow
 
 ```
-User Input
+User Input (Input textarea - preserved)
     ↓
 parseInput() - Parse and normalize CIDR strings
     ↓
@@ -173,8 +213,6 @@ Convert to CIDRBlock models (with version detection)
     ↓
 sortCIDRModels() (IPv4 first, then IPv6, each sorted numerically)
     ↓
-Display sorted in textarea
-    ↓
 aggregateCIDRs() using cidr-tools merge()
     ↓
 Convert aggregated strings back to CIDRBlock models
@@ -183,13 +221,13 @@ transformToFormat() - Apply selected output format
     ├── before aggregation: Transform sorted models
     └── after aggregation: Transform aggregated models
     ↓
-Display transformed output in textarea
+Display transformed output in Output textarea (Input remains unchanged)
     ↓
 generateDiff() comparing sorted vs aggregated
     ↓
 renderDiff() with color coding
     ↓
-User can copy results
+User can copy input or output using individual copy buttons
 ```
 
 ## Transformation Architecture
@@ -344,8 +382,20 @@ format(cidrBlocks) {
 
 - **Basic flow** - Complete aggregation workflow
 - **Input formats** - Various input formats and edge cases
-- **Copy button** - Clipboard functionality and feedback
+- **Copy buttons** - Individual clipboard functionality for input and output
+- **Input preservation** - Verify original input remains unchanged after aggregation
 - **Error handling** - Invalid input scenarios
+- **Comprehensive aggregation** - 19 scenarios validating:
+  - IPv4: adjacent, overlapping, non-overlapping, non-adjacent merging
+  - IPv6: adjacent, overlapping, non-overlapping, non-adjacent merging
+  - IPv6 compression: full expansion, zero-compressed, mixed case, leading zeros
+  - Bare IPs: auto-conversion to /32 (IPv4) and /128 (IPv6)
+  - Mixed: IPv4 + IPv6 together, sorting validation
+  - Input formats: newline, comma, mixed separators, extra whitespace
+  - Diff highlighting: removed (red), added (green), unchanged
+  - Input preservation: original format remains in input box
+
+See `tests/tests.md` for detailed test scenarios with inputs, expected outputs, and validation checks.
 
 ### Coverage Target
 
@@ -396,3 +446,48 @@ The application follows WCAG 2.1 AA guidelines for accessibility:
 - Can be deployed to any static hosting service
 - Examples: GitHub Pages, Netlify, Vercel, S3
 - No build process or runtime dependencies
+
+## Icons and Visual Assets
+
+### Icon System
+
+The application uses **Lucide Icons** for all iconography:
+
+- **License:** ISC (fully permissive for commercial and personal use)
+- **Homepage:** https://lucide.dev
+- **Source:** https://github.com/lucide-icons/lucide
+
+### Usage Guidelines
+
+#### Current Icon Implementations
+
+- **Copy icon** (📋 replaced with Lucide Icons copy)
+  - Used in both input and output panel headers
+  - SVG implementation provides better visual quality than emoji
+  - Works correctly in both light and dark modes
+
+#### Icon Integration
+
+All icons use inline SVG with `currentColor` for `stroke` attribute to automatically adapt to application's text color:
+
+- Automatically adjusts for dark/light mode themes
+- Follows CSS custom properties for color variables
+- Ensures consistent visual hierarchy
+
+#### Adding New Icons
+
+When adding new icons:
+
+1. Check Lucide Icons for suitable icon: https://lucide.dev/
+2. Copy the SVG code
+3. Use `fill="none"` and `stroke="currentColor"` attributes
+4. Set `stroke-width="2"` for consistency with existing icons
+5. Ensure proper `stroke-linecap="round"` and `stroke-linejoin="round"`
+6. Update aria-label and title attributes for accessibility
+7. Size to 16x16 for consistency with current icon buttons
+
+#### Icon Sizing
+
+- **Icon buttons:** 16x16 (defined in CSS: `.icon-button svg { width: 16px; height: 16px; }`)
+- Maintain consistent sizing for uniform visual appearance
+- Test scaling behavior on high-DPI displays

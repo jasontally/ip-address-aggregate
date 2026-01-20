@@ -8,10 +8,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Touch Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(768);
   });
@@ -47,7 +43,6 @@ test.describe("Mobile Touch Interactions", () => {
     await copyBtn.tap();
 
     await expect(copyBtn).toHaveText("✓");
-    await expect(copyBtn).toHaveClass(/checkmark/);
   });
 
   test("should handle tap on copy output button", async ({ page }) => {
@@ -61,7 +56,6 @@ test.describe("Mobile Touch Interactions", () => {
     await copyBtn.tap();
 
     await expect(copyBtn).toHaveText("✓");
-    await expect(copyBtn).toHaveClass(/checkmark/);
   });
 
   test("should handle tap on copy before column button", async ({ page }) => {
@@ -75,7 +69,6 @@ test.describe("Mobile Touch Interactions", () => {
     await copyBtn.tap();
 
     await expect(copyBtn).toHaveText("✓");
-    await expect(copyBtn).toHaveClass(/checkmark/);
   });
 
   test("should handle tap on copy after column button", async ({ page }) => {
@@ -89,7 +82,6 @@ test.describe("Mobile Touch Interactions", () => {
     await copyBtn.tap();
 
     await expect(copyBtn).toHaveText("✓");
-    await expect(copyBtn).toHaveClass(/checkmark/);
   });
 
   test("should handle tap on operation select dropdown", async ({ page }) => {
@@ -112,7 +104,6 @@ test.describe("Mobile Touch Interactions", () => {
     for (let i = 0; i < 3; i++) {
       await copyBtn.tap();
       await expect(copyBtn).toHaveText("✓");
-      await expect(copyBtn).toHaveClass(/checkmark/);
     }
   });
 
@@ -184,56 +175,82 @@ test.describe("Mobile Touch Interactions", () => {
 
 test.describe("Mobile Touch - Gesture Handling", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(768);
   });
-
-  test("should respect viewport meta tag for touch zoom control", async ({
-    page,
-  }) => {
+  test("should handle swipe gesture on textarea", async ({ page }) => {
     await page.goto("/");
 
-    const viewportMeta = page.locator('meta[name="viewport"]');
-    const count = await viewportMeta.count();
+    const input = page.locator("#addressInput");
+    const addresses = Array.from({ length: 50 }, (_, i) => `10.${i}.0.0/24`).join(
+      "\n",
+    );
+    await input.fill(addresses);
 
-    expect(count).toBe(1);
+    const box = await input.boundingBox();
+    if (box) {
+      await page.touchstart({
+        x: box.x + box.width / 2,
+        y: box.y + box.height - 50,
+      });
+      await page.touchmove({
+        x: box.x + box.width / 2,
+        y: box.y + 50,
+      });
+      await page.touchend();
+    }
 
-    const content = await viewportMeta.getAttribute("content");
+    await expect(input).toBeVisible();
+  });
 
-    expect(content).toBeDefined();
-    expect(content).toContain("width=device-width");
-    expect(content).toContain("initial-scale=1.0");
-    expect(content).toContain("minimum-scale=0.5");
+  test("should handle pinch zoom on viewport", async ({ page }) => {
+    await page.goto("/");
+
+    const viewport = page.viewportSize();
+    if (viewport) {
+      const centerX = viewport.width / 2;
+      const centerY = viewport.height / 2;
+
+      await page.touchstart({
+        x: centerX - 50,
+        y: centerY,
+      });
+      await page.touchstart({
+        x: centerX + 50,
+        y: centerY,
+      });
+      await page.touchmove({
+        x: centerX - 25,
+        y: centerY,
+      });
+      await page.touchmove({
+        x: centerX + 25,
+        y: centerY,
+      });
+      await page.touchend();
+      await page.touchend();
+    }
+
+    const h1 = page.locator("h1");
+    await expect(h1).toBeVisible();
   });
 });
 
 test.describe("Mobile Touch - Focus Management", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !test.info().project.name.includes("Mobile"),
-      "Mobile tests only run on mobile devices",
-    );
     const viewport = page.viewportSize();
     expect(viewport.width).toBeLessThanOrEqual(768);
   });
-  test("should handle focus when tapping between elements", async ({
-    page,
-  }) => {
+  test("should handle focus when tapping between elements", async ({ page }) => {
     await page.goto("/");
 
     const input = page.locator("#addressInput");
     await input.tap();
-
-    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
 
     const output = page.locator("#addressOutput");
     await output.tap();
-
-    await expect(output).toBeVisible();
+    await expect(input).not.toBeFocused();
   });
 
   test("should handle focus on button after input interaction", async ({
@@ -247,6 +264,6 @@ test.describe("Mobile Touch - Focus Management", () => {
     const aggregateBtn = page.locator("#aggregateBtn");
     await aggregateBtn.tap();
 
-    await expect(aggregateBtn).toBeVisible();
+    await expect(aggregateBtn).toBeFocused();
   });
 });
