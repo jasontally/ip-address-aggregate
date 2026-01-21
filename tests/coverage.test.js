@@ -101,9 +101,7 @@ describe("Coverage Improvements", () => {
 
     it("should convert ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff to max", () => {
       const num = ipv6ToNumber("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff");
-      expect(num).toBe(
-        BigInt("340282366920938463463374607431768211455"),
-      );
+      expect(num).toBe(BigInt("340282366920938463463374607431768211455"));
     });
   });
 
@@ -184,7 +182,10 @@ describe("Coverage Improvements", () => {
 
       init();
 
-      expect(addEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        "keydown",
+        expect.any(Function),
+      );
       addEventListenerSpy.mockRestore();
     });
   });
@@ -197,11 +198,16 @@ describe("Coverage Improvements", () => {
         <html>
           <body>
             <textarea id="addressInput"></textarea>
+            <textarea id="addressOutput"></textarea>
             <div id="error"></div>
             <div id="diffContainer" class="diff-container"></div>
             <div id="beforeColumn" class="diff-column"></div>
             <div id="afterColumn" class="diff-column"></div>
             <button id="copyBtn"></button>
+            <div id="inputValidation" class="validation-panel" style="display: none">
+              <div id="correctedWarnings" class="corrected-warnings"></div>
+              <div id="invalidErrors" class="invalid-errors"></div>
+            </div>
           </body>
         </html>
       `);
@@ -224,10 +230,14 @@ describe("Coverage Improvements", () => {
       textarea.value = "invalid";
 
       const errorDiv = document.getElementById("error");
+      const invalidErrorsDiv = document.getElementById("invalidErrors");
 
       await aggregateAddresses();
 
-      expect(errorDiv.textContent).toContain("Invalid CIDR");
+      expect(errorDiv.textContent).toContain(
+        "All 1 entries are invalid. See details above.",
+      );
+      expect(invalidErrorsDiv.textContent).not.toBe("");
     });
   });
 });
