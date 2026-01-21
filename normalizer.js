@@ -589,23 +589,51 @@ export function normalizeInput(input) {
     return [];
   }
 
-  // Split by newlines and commas, preserving empty for line tracking
   const lines = input.split("\n");
   const results = [];
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx];
-    // Split line by commas
     const entries = line.split(",");
 
     for (const entry of entries) {
       const trimmed = entry.trim();
       if (trimmed.length === 0) continue;
 
-      const result = normalizeEntry(trimmed);
-      result.lineNumber = lineIdx + 1; // 1-based line number
-      results.push(result);
+      const normalized = parseEntry(trimmed);
+      if (normalized) {
+        normalized.lineNumber = lineIdx + 1;
+        results.push(normalized);
+      } else {
+        const spaceDelimited = parseSpaceDelimited(trimmed, lineIdx + 1);
+        results.push(...spaceDelimited);
+      }
     }
+  }
+
+  return results;
+}
+
+function parseEntry(entry) {
+  const result = normalizeEntry(entry);
+  return result.status !== NormalizationStatus.INVALID ? result : null;
+}
+
+function parseSpaceDelimited(entry, lineNumber) {
+  const tokens = entry.split(/\s+/).filter((t) => t.trim().length > 0);
+
+  if (tokens.length === 1) {
+    const result = normalizeEntry(tokens[0]);
+    result.lineNumber = lineNumber;
+    return [result];
+  }
+
+  const results = [];
+
+  for (const token of tokens) {
+    const result = normalizeEntry(token);
+    result.lineNumber = lineNumber;
+    results.push(result);
   }
 
   return results;

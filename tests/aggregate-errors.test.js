@@ -84,6 +84,51 @@ describe("Aggregation Error Handling", () => {
         "Please enter at least one IP address or CIDR",
       );
     });
+
+    it("should show error for space-delimited invalid input", async () => {
+      const textarea = document.getElementById("addressInput");
+      textarea.value = "invalid-cidr another-invalid bad-address";
+
+      const errorDiv = document.getElementById("error");
+      const invalidErrorsDiv = document.getElementById("invalidErrors");
+
+      await aggregateAddresses();
+
+      expect(errorDiv.textContent).toContain(
+        "All 3 entries are invalid. See details above.",
+      );
+      expect(invalidErrorsDiv.textContent).toContain("invalid-cidr");
+      expect(invalidErrorsDiv.textContent).toContain("another-invalid");
+      expect(invalidErrorsDiv.textContent).toContain("bad-address");
+    });
+
+    it("should handle space-delimited valid entries", async () => {
+      const textarea = document.getElementById("addressInput");
+      textarea.value = "192.168.1.0/24 10.0.0.0/8 172.16.0.0/12";
+
+      const errorDiv = document.getElementById("error");
+      const output = document.getElementById("addressOutput");
+
+      await aggregateAddresses();
+
+      expect(errorDiv.textContent).toBe("");
+      expect(output.value).toContain("192.168.1.0/24");
+      expect(output.value).toContain("10.0.0.0/8");
+      expect(output.value).toContain("172.16.0.0/12");
+    });
+
+    it("should NOT split valid IP with subnet mask format", async () => {
+      const textarea = document.getElementById("addressInput");
+      textarea.value = "192.168.1.0 255.255.255.0";
+
+      const errorDiv = document.getElementById("error");
+      const output = document.getElementById("addressOutput");
+
+      await aggregateAddresses();
+
+      expect(errorDiv.textContent).toBe("");
+      expect(output.value).toBe("192.168.1.0/24");
+    });
   });
 
   describe("Invalid CIDR Format Handling", () => {
@@ -301,39 +346,6 @@ describe("Aggregation Error Handling", () => {
         "All 4 entries are invalid. See details above.",
       );
       expect(errorDiv.textContent).not.toContain("Previous error message");
-      expect(invalidErrorsDiv.textContent).toContain("invalid1");
-      expect(invalidErrorsDiv.textContent).toContain("invalid2");
-      expect(invalidErrorsDiv.textContent).toContain("invalid3");
-      expect(invalidErrorsDiv.textContent).toContain("invalid4");
-    });
-  });
-
-  describe("Error Message Format", () => {
-    it("should include prefix in error message", async () => {
-      const textarea = document.getElementById("addressInput");
-      textarea.value = "invalid-cidr";
-
-      const errorDiv = document.getElementById("error");
-
-      await aggregateAddresses();
-
-      expect(errorDiv.textContent).toContain(
-        "All 1 entries are invalid. See details above.",
-      );
-    });
-
-    it("should show all invalid entries", async () => {
-      const textarea = document.getElementById("addressInput");
-      textarea.value = "invalid1\ninvalid2\ninvalid3\ninvalid4";
-
-      const errorDiv = document.getElementById("error");
-      const invalidErrorsDiv = document.getElementById("invalidErrors");
-
-      await aggregateAddresses();
-
-      expect(errorDiv.textContent).toContain(
-        "All 4 entries are invalid. See details above.",
-      );
       expect(invalidErrorsDiv.textContent).toContain("invalid1");
       expect(invalidErrorsDiv.textContent).toContain("invalid2");
       expect(invalidErrorsDiv.textContent).toContain("invalid3");
