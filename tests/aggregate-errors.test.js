@@ -145,7 +145,7 @@ describe("Aggregation Error Handling", () => {
         "All 1 entries are invalid. See details above.",
       );
       expect(invalidErrorsDiv.textContent).toContain(
-        "Invalid IPv4 range format",
+        "Unrecognized IP address format",
       );
     });
 

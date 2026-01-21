@@ -76,7 +76,22 @@ function normalizeIPv4Address(addr) {
 export function parseIPv4Entry(entry) {
   const trimmed = entry.trim();
 
-  // Pattern: IP/CIDR (192.168.1.0/24)
+  // Pattern: IP/subnet mask (192.168.1.0/255.255.255.0) - must be checked before CIDR
+  const slashMaskMatch = trimmed.match(/^([\d.]+)\/([\d.]+)$/);
+  if (slashMaskMatch && slashMaskMatch[2].includes(".")) {
+    const [, addr, mask] = slashMaskMatch;
+    const prefix = subnetMaskToCIDRPrefix(mask);
+    if (isValidIPv4Address(addr) && prefix !== null) {
+      const normalized = normalizeIPv4Address(addr);
+      return createResult(entry, NormalizationStatus.CORRECTED, {
+        normalized: `${normalized}/${prefix}`,
+        expandedTo: [`${normalized}/${prefix}`],
+        warning: `Converted mask "${mask}" to /${prefix}`,
+      });
+    }
+  }
+
+  // Pattern: IP/CIDR (192.168.1.0/24) - checked after subnet mask
   const cidrMatch = trimmed.match(/^([\d.]+)\/(\d+)$/);
   if (cidrMatch) {
     const [, addr, prefix] = cidrMatch;
@@ -95,21 +110,6 @@ export function parseIPv4Entry(entry) {
             : null,
         },
       );
-    }
-  }
-
-  // Pattern: IP/subnet mask (192.168.1.0/255.255.255.0)
-  const slashMaskMatch = trimmed.match(/^([\d.]+)\/([\d.]+)$/);
-  if (slashMaskMatch && slashMaskMatch[2].includes(".")) {
-    const [, addr, mask] = slashMaskMatch;
-    const prefix = subnetMaskToCIDRPrefix(mask);
-    if (isValidIPv4Address(addr) && prefix !== null) {
-      const normalized = normalizeIPv4Address(addr);
-      return createResult(entry, NormalizationStatus.CORRECTED, {
-        normalized: `${normalized}/${prefix}`,
-        expandedTo: [`${normalized}/${prefix}`],
-        warning: `Converted mask "${mask}" to /${prefix}`,
-      });
     }
   }
 
@@ -145,10 +145,9 @@ export function parseIPv4Entry(entry) {
     );
   }
 
-  // Pattern: IPv4 range - handled in T04
-  if (trimmed.includes("-") && !trimmed.includes(":")) {
-    return parseIPv4Range(entry);
-  }
+  // Pattern: IPv4 range
+  const rangeResult = parseIPv4Range(trimmed, entry);
+  if (rangeResult) return rangeResult;
 
   return null; // Not recognized as IPv4
 }
@@ -234,68 +233,72 @@ export function expandIPv4Range(start, end) {
 function parseIPv4Range(entry) {
   const trimmed = entry.trim();
 
-  // Full range: 192.168.1.1-192.168.1.100
-  const fullMatch = trimmed.match(/^([\d.]+)-([\d.]+)$/);
-  if (fullMatch) {
-    const [, startAddr, endAddr] = fullMatch;
-    if (isValidIPv4Address(startAddr) && isValidIPv4Address(endAddr)) {
-      const start = ipv4ToNumber(normalizeIPv4Address(startAddr));
-      const end = ipv4ToNumber(normalizeIPv4Address(endAddr));
+  // Check for valid IPv4 addresses before attempting to parse as range
+  const hasHyphen = trimmed.includes("-");
+  const hasColons = trimmed.includes(":");
 
-      if (start > end) {
-        return createResult(entry, NormalizationStatus.INVALID, {
-          error: "Range start is greater than end",
+  if (hasHyphen && !hasColons) {
+    // Full range: 192.168.1.1-192.168.1.100
+    const fullMatch = trimmed.match(/^([\d.]+)-([\d.]+)$/);
+    if (fullMatch) {
+      const [, startAddr, endAddr] = fullMatch;
+      if (isValidIPv4Address(startAddr) && isValidIPv4Address(endAddr)) {
+        const start = ipv4ToNumber(normalizeIPv4Address(startAddr));
+        const end = ipv4ToNumber(normalizeIPv4Address(endAddr));
+
+        if (start > end) {
+          return createResult(entry, NormalizationStatus.INVALID, {
+            error: "Range start is greater than end",
+          });
+        }
+
+        const cidrs = expandIPv4Range(start, end);
+        return createResult(entry, NormalizationStatus.CORRECTED, {
+          normalized: cidrs[0],
+          expandedTo: cidrs,
+          warning: `Expanded range to ${cidrs.length} CIDR block(s)`,
         });
       }
+    }
 
-      const cidrs = expandIPv4Range(start, end);
-      return createResult(entry, NormalizationStatus.CORRECTED, {
-        normalized: cidrs[0],
-        expandedTo: cidrs,
-        warning: `Expanded range to ${cidrs.length} CIDR block(s)`,
-      });
+    // Short range: 192.168.1.1-100
+    const shortMatch = trimmed.match(/^([\d.]+)-(\d+)$/);
+    if (shortMatch) {
+      const [, startAddr, endOctet] = shortMatch;
+      if (isValidIPv4Address(startAddr)) {
+        const normalized = normalizeIPv4Address(startAddr);
+        const parts = normalized.split(".");
+        const endNum = parseInt(endOctet, 10);
+
+        if (endNum < 0 || endNum > 255) {
+          return createResult(entry, NormalizationStatus.INVALID, {
+            error: "Invalid end octet in range",
+          });
+        }
+
+        parts[3] = endNum.toString();
+        const endAddr = parts.join(".");
+
+        const start = ipv4ToNumber(normalized);
+        const end = ipv4ToNumber(endAddr);
+
+        if (start > end) {
+          return createResult(entry, NormalizationStatus.INVALID, {
+            error: "Range start is greater than end",
+          });
+        }
+
+        const cidrs = expandIPv4Range(start, end);
+        return createResult(entry, NormalizationStatus.CORRECTED, {
+          normalized: cidrs[0],
+          expandedTo: cidrs,
+          warning: `Expanded range "${trimmed}" to ${cidrs.length} CIDR block(s)`,
+        });
+      }
     }
   }
 
-  // Short range: 192.168.1.1-100
-  const shortMatch = trimmed.match(/^([\d.]+)-(\d+)$/);
-  if (shortMatch) {
-    const [, startAddr, endOctet] = shortMatch;
-    if (isValidIPv4Address(startAddr)) {
-      const normalized = normalizeIPv4Address(startAddr);
-      const parts = normalized.split(".");
-      const endNum = parseInt(endOctet, 10);
-
-      if (endNum < 0 || endNum > 255) {
-        return createResult(entry, NormalizationStatus.INVALID, {
-          error: "Invalid end octet in range",
-        });
-      }
-
-      parts[3] = endNum.toString();
-      const endAddr = parts.join(".");
-
-      const start = ipv4ToNumber(normalized);
-      const end = ipv4ToNumber(endAddr);
-
-      if (start > end) {
-        return createResult(entry, NormalizationStatus.INVALID, {
-          error: "Range start is greater than end",
-        });
-      }
-
-      const cidrs = expandIPv4Range(start, end);
-      return createResult(entry, NormalizationStatus.CORRECTED, {
-        normalized: cidrs[0],
-        expandedTo: cidrs,
-        warning: `Expanded range "${trimmed}" to ${cidrs.length} CIDR block(s)`,
-      });
-    }
-  }
-
-  return createResult(entry, NormalizationStatus.INVALID, {
-    error: "Invalid IPv4 range format",
-  });
+  return null;
 }
 
 // ========== IPv6 Helpers ==========
@@ -532,9 +535,7 @@ export function parseIPv6Entry(entry) {
     );
   }
 
-  return createResult(entry, NormalizationStatus.INVALID, {
-    error: "Invalid IPv6 format",
-  });
+  return null; // Not recognized as IPv6
 }
 
 /**
