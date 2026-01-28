@@ -31,6 +31,22 @@ export default defineConfig({
       name: "webkit",
       use: { ...devices["Desktop Safari"], permissions: ["clipboard-read"] },
     },
+    {
+      name: "Mobile Chrome Portrait",
+      use: { ...devices["Pixel 5"], permissions: ["clipboard-read"] },
+    },
+    {
+      name: "Mobile Chrome Landscape",
+      use: { ...devices["Pixel 5 landscape"], permissions: ["clipboard-read"] },
+    },
+    {
+      name: "Mobile Safari Portrait",
+      use: { ...devices["iPhone 12"], permissions: ["clipboard-read"] },
+    },
+    {
+      name: "Mobile Safari Landscape",
+      use: { ...devices["iPhone 12 landscape"], permissions: ["clipboard-read"] },
+    },
   ],
 
   webServer: {

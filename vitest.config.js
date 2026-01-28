@@ -12,7 +12,11 @@ export default defineConfig({
     alias: {
       "https://esm.sh/cidr-tools@8.0.0": path.resolve(
         __dirname,
-        "node_modules/cidr-tools",
+        "node_modules/fast-cidr-tools",
+      ),
+      "https://esm.sh/fast-cidr-tools@0.3.4": path.resolve(
+        __dirname,
+        "node_modules/fast-cidr-tools",
       ),
       "https://esm.sh/diff@5.1.0": path.resolve(__dirname, "node_modules/diff"),
     },
